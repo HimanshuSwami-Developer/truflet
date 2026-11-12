@@ -58,9 +58,7 @@ class _GroupViewState extends State<_GroupView> {
 
   Widget _build(BuildContext context, Json? g) {
     if (g == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: C.brand)),
-      );
+      return const Scaffold(body: HeroPageSkeleton(heroHeight: 210, stats: false));
     }
     final gg = g;
     final top = MediaQuery.of(context).padding.top;

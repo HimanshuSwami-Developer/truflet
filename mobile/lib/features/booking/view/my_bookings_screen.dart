@@ -126,11 +126,7 @@ class _MyBookingsView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (error != null) ErrorRetry(error, onRetry: cubit.load),
-          if (data == null && error == null)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator(color: C.brand)),
-            ),
+          if (data == null && error == null) const BookingCardsSkeleton(),
           if (data != null && asList(data['items']).isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),

@@ -290,13 +290,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                             style: t(11, w: FontWeight.w600, c: C.muted, ls: 1.2),
                           ),
                           const SizedBox(height: 14),
-                          if (loading)
-                            const Padding(
-                              padding: EdgeInsets.all(30),
-                              child: Center(child: CircularProgressIndicator(color: C.brand)),
-                            )
-                          else
-                            ..._groups(st, c.valid),
+                          if (loading) const SlotGridSkeleton() else ..._groups(st, c.valid),
                           Container(
                             margin: const EdgeInsets.only(top: 18),
                             padding: const EdgeInsets.only(top: 14),

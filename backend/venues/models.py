@@ -110,6 +110,15 @@ class Venue(TimeStamped):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                               related_name="owned_venues")
 
+    # Partnership tracking — admin panel only, never sent to the app.
+    OPERATORS = [("chain", "Multi-venue chain"), ("standalone", "Standalone")]
+    PARTNER_STATUSES = [("not_contacted", "Not contacted"), ("contacted", "Contacted"), ("interested", "Interested"),
+                        ("onboarded", "Onboarded"), ("declined", "Declined")]
+    contact_email = models.CharField(max_length=120, blank=True, help_text="Business contact (internal)")
+    operator_type = models.CharField(max_length=12, choices=OPERATORS, blank=True)
+    partner_status = models.CharField(max_length=14, choices=PARTNER_STATUSES, default="onboarded")
+    internal_notes = models.TextField(blank=True, help_text="Outreach notes, extra phone numbers… (internal)")
+
     class Meta:
         ordering = ["name"]
 

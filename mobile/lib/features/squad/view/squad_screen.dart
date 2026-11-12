@@ -295,11 +295,7 @@ class _SquadViewState extends State<_SquadView> {
               onChanged: _cubit.selectTab,
             ),
           ),
-          if (!loaded)
-            const Padding(
-              padding: EdgeInsets.all(30),
-              child: Center(child: CircularProgressIndicator(color: C.brand)),
-            ),
+          if (!loaded) const ListSkeleton(count: 3, leading: 60, padding: EdgeInsets.fromLTRB(20, 14, 20, 0)),
           if (loaded && tab == 0) _groups(st.groups),
           if (loaded && tab == 1) _friends(st.friends),
           if (loaded && tab == 2) _requests(st.requests, st.nearby),

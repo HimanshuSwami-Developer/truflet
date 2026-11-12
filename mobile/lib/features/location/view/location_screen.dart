@@ -123,6 +123,7 @@ class _LocationView extends StatelessWidget {
                           ),
                         ),
                         if (st.error != null) ErrorRetry(st.error!, onRetry: cubit.load),
+                        if (st.loading) const CityAreaSkeleton(),
                         if (cities.isNotEmpty && query.isEmpty) ...[
                           const Label('Popular cities', padding: EdgeInsets.fromLTRB(0, 22, 0, 12)),
                           GridView.count(
@@ -135,29 +136,31 @@ class _LocationView extends StatelessWidget {
                             children: [for (var i = 0; i < cities.length; i++) _cityTile(cubit, st, i)],
                           ),
                         ],
-                        Label(
-                          query.isEmpty ? 'Areas in ${cities.isEmpty ? '' : cities[city]['name']}' : 'Matching areas',
-                          padding: const EdgeInsets.fromLTRB(0, 24, 0, 6),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: C.line),
+                        if (!st.loading) ...[
+                          Label(
+                            query.isEmpty ? 'Areas in ${cities.isEmpty ? '' : cities[city]['name']}' : 'Matching areas',
+                            padding: const EdgeInsets.fromLTRB(0, 24, 0, 6),
                           ),
-                          child: Column(
-                            children: [
-                              for (var i = 0; i < filteredAreas.length; i++)
-                                _areaRow(context, st, filteredAreas[i], i < filteredAreas.length - 1),
-                              if (filteredAreas.isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Text('No areas match "$query"', style: t(14, c: C.muted)),
-                                ),
-                            ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: C.line),
+                            ),
+                            child: Column(
+                              children: [
+                                for (var i = 0; i < filteredAreas.length; i++)
+                                  _areaRow(context, st, filteredAreas[i], i < filteredAreas.length - 1),
+                                if (filteredAreas.isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text('No areas match "$query"', style: t(14, c: C.muted)),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),

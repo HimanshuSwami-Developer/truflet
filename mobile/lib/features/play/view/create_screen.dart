@@ -112,7 +112,7 @@ class _CreateViewState extends State<_CreateView> {
               Expanded(
                 child: loadError != null
                     ? ErrorRetry(loadError!, onRetry: _cubit.init)
-                    : const Center(child: CircularProgressIndicator(color: C.brand)),
+                    : const Align(alignment: Alignment.topCenter, child: FormSkeleton()),
               ),
             ],
           ),

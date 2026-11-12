@@ -105,7 +105,7 @@ class _ProfileViewState extends State<_ProfileView> {
     final app = context.watch<AppCubit>();
     final s = app.state;
     final u = s.user;
-    if (u == null) return const Center(child: CircularProgressIndicator(color: C.brand));
+    if (u == null) return const ProfileSkeleton();
     final top = MediaQuery.of(context).padding.top;
     final stats = asMap(u['stats']);
     final sports = asList(u['sports']);

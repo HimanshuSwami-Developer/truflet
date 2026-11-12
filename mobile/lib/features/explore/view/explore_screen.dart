@@ -267,11 +267,7 @@ class _ExploreView extends StatelessWidget {
             ),
           ),
           if (error != null) ErrorRetry(error, onRetry: cubit.load),
-          if (venues == null && error == null)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator(color: C.brand)),
-            ),
+          if (venues == null && error == null) const VenueCardsSkeleton(),
           if (venues != null && venues.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),

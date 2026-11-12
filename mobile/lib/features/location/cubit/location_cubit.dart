@@ -34,6 +34,7 @@ class LocationCubit extends Cubit<LocationState> {
           city: ci,
           areaId: keepCurrent ? current : (areas.isNotEmpty ? areas.first['id'] : null),
           error: null,
+          loaded: true,
         ),
       );
     } catch (e) {

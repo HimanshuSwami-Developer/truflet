@@ -37,7 +37,9 @@ class _TicketViewState extends State<_TicketView> {
   TicketCubit get _cubit => context.read<TicketCubit>();
 
   @override
-  Widget build(BuildContext context) => Scaffold(body: DataBuilder<TicketCubit, Json>(builder: (context, b) => _body(b)));
+  Widget build(BuildContext context) => Scaffold(
+    body: DataBuilder<TicketCubit, Json>(skeleton: const TicketSkeleton(), builder: (context, b) => _body(b)),
+  );
 
   Future<void> _cancel(Json b) async {
     Json quote;

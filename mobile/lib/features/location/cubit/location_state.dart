@@ -10,6 +10,9 @@ class LocationState {
   final double? lat, lng;
   final String? error;
 
+  /// Cities have arrived from the server at least once.
+  final bool loaded;
+
   const LocationState({
     this.cities = const [],
     this.city = 0,
@@ -20,7 +23,11 @@ class LocationState {
     this.lat,
     this.lng,
     this.error,
+    this.loaded = false,
   });
+
+  /// First load still in flight (show the skeleton).
+  bool get loading => !loaded && error == null;
 
   /// Only live cities can be picked; the rest show as "Coming soon". Older servers don't send the flag → live.
   static bool isLive(Json c) => c['is_live'] != false;
@@ -49,6 +56,7 @@ class LocationState {
     Object? lat = _keep,
     Object? lng = _keep,
     Object? error = _keep,
+    bool? loaded,
   }) => LocationState(
     cities: cities ?? this.cities,
     city: city ?? this.city,
@@ -59,5 +67,6 @@ class LocationState {
     lat: identical(lat, _keep) ? this.lat : lat as double?,
     lng: identical(lng, _keep) ? this.lng : lng as double?,
     error: identical(error, _keep) ? this.error : error as String?,
+    loaded: loaded ?? this.loaded,
   );
 }

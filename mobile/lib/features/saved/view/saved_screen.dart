@@ -92,11 +92,7 @@ class _SavedViewState extends State<_SavedView> {
               ],
             ),
           ),
-          if (items == null)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator(color: C.brand)),
-            ),
+          if (items == null) const SavedGridSkeleton(),
           if (items != null && items.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),

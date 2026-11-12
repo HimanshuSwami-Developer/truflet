@@ -84,6 +84,7 @@ class _PolicyViewState extends State<_PolicyView> {
           ),
           Expanded(
             child: DataBuilder<PolicyCubit, Json>(
+              skeleton: const TextCardsSkeleton(),
               builder: (context, p) => ListView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                 children: [

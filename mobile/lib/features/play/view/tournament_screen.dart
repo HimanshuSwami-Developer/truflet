@@ -105,11 +105,7 @@ class _TournamentViewState extends State<_TournamentView> with SingleTickerProvi
   Widget _build(BuildContext context, TournamentState st) {
     final data = st.data, error = st.error, tab = st.tab, busy = st.busy;
     if (data == null) {
-      return Scaffold(
-        body: error != null
-            ? ErrorRetry(error, onRetry: _cubit.load)
-            : const Center(child: CircularProgressIndicator(color: C.brand)),
-      );
+      return Scaffold(body: error != null ? ErrorRetry(error, onRetry: _cubit.load) : const HeroPageSkeleton());
     }
     final tt = data;
     final top = MediaQuery.of(context).padding.top;

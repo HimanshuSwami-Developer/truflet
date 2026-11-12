@@ -60,7 +60,9 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: DataBuilder<VenueDetailsCubit, Json>(builder: (context, v) => _body(v)));
+    return Scaffold(
+      body: DataBuilder<VenueDetailsCubit, Json>(skeleton: const VenueDetailsSkeleton(), builder: (context, v) => _body(v)),
+    );
   }
 
   Widget _body(Json v) {

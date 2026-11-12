@@ -56,6 +56,7 @@ class _NotificationsView extends StatelessWidget {
           ),
           Expanded(
             child: DataBuilder<NotificationsCubit, Json>(
+              skeleton: const ListSkeleton(count: 6),
               builder: (context, r) {
                 final items = asList(r['items']);
                 if (items.isEmpty) {

@@ -248,10 +248,7 @@ class _PlayViewState extends State<_PlayView> with SingleTickerProviderStateMixi
           ),
           if (error != null) ErrorRetry(error, onRetry: _cubit.load),
           if (data == null && error == null)
-            const Padding(
-              padding: EdgeInsets.all(30),
-              child: Center(child: CircularProgressIndicator(color: C.brand)),
-            ),
+            const ListSkeleton(count: 3, leading: 44, padding: EdgeInsets.fromLTRB(20, 12, 20, 0)),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Column(
