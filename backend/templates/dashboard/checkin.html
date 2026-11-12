@@ -1,0 +1,30 @@
+{% extends "dashboard/base.html" %}{% load dash %}
+{% block title %}Check-in desk{% endblock %}
+{% block content %}
+<h1 class="mb-1 font-display text-2xl font-bold">Check-in desk</h1>
+<p class="mb-5 text-sm text-brand-muted">Scan the player's QR with a USB/Bluetooth scanner (it types into the box) or enter the booking ID.</p>
+<form class="card mb-5 flex max-w-xl gap-2 p-4">
+  <label for="code" class="sr-only">Booking ID</label>
+  <input id="code" name="code" value="{{ code }}" autofocus placeholder="TRF-7N26-4821" class="h-12 flex-1 rounded-xl border border-brand-line px-4 font-display text-lg tracking-wider outline-none focus:border-brand">
+  <button class="btn btn-primary h-12">Verify</button>
+</form>
+{% if b %}
+  <div class="card max-w-xl overflow-hidden">
+    <div class="p-5 {% if b.status == 'confirmed' and b.date == today %}bg-brand-50{% elif b.status == 'confirmed' %}bg-amber-50{% else %}bg-red-50{% endif %}">
+      <p class="text-xs font-bold uppercase tracking-wider">{% if b.status == 'confirmed' and b.date == today %}✓ Valid for today{% elif b.status == 'confirmed' %}Valid — but for {{ b.date|date:"D d M" }}{% else %}Not valid · {{ b.get_status_display }}{% endif %}</p>
+      <h2 class="font-display text-2xl font-bold">{{ b.code }}</h2>
+    </div>
+    <dl class="grid grid-cols-2 gap-4 p-5 text-sm">
+      <div><dt class="text-xs text-brand-muted">Player</dt><dd class="font-semibold">{{ b.user }} · {{ b.user.email }}{% if b.user.phone %} · {{ b.user.phone }}{% endif %}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Venue</dt><dd class="font-semibold">{{ b.venue }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Court · sport</dt><dd class="font-semibold">{{ b.court.name }} · {{ b.sport }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Slot</dt><dd class="font-semibold">{{ b.start_hour|hour }} – {{ b.end_hour|hour }} ({{ b.duration }}h)</dd></div>
+      <div><dt class="text-xs text-brand-muted">Payment</dt><dd class="font-semibold">{{ b.get_payment_status_display }} · {{ b.total|inr }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Checked in</dt><dd class="font-semibold">{{ b.checked_in_at|date:"h:i A"|default:"Not yet" }}</dd></div>
+    </dl>
+    {% if b.status == 'confirmed' and not b.checked_in_at %}
+      <div class="border-t border-brand-line p-5"><button type="button" class="btn btn-primary h-12 w-full justify-center" data-action-url="{% url 'dashboard:booking_action' b.pk 'checkin' %}">Check in</button></div>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

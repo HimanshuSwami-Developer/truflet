@@ -1,0 +1,29 @@
+{% extends "dashboard/base.html" %}{% load dash %}
+{% block title %}Slot board · {{ v.name }}{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard:venue_detail' v.pk %}" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand"><i data-lucide="chevron-left" class="h-4 w-4"></i>{{ v.name }}</a>
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="font-display text-2xl font-bold">Slot board · {{ day|date:"l, j M" }}</h1>
+  <form class="flex gap-2"><a href="?date={{ prev }}" class="btn btn-ghost">←</a>
+    <input type="date" name="date" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()" class="h-10 rounded-xl border border-brand-line px-3 text-sm">
+    <a href="?date={{ next }}" class="btn btn-ghost">→</a></form>
+</div>
+<div class="card overflow-x-auto p-4">
+  <table class="text-xs">
+    <thead><tr><th class="sticky left-0 bg-white px-2 py-2 text-left">Court</th>{% for h in hours %}<th class="px-1 py-2 font-semibold text-brand-muted">{{ h|hour }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in rows %}
+        <tr><td class="sticky left-0 whitespace-nowrap bg-white px-2 py-1 font-semibold">{{ row.court.name }}</td>
+          {% for c in row.cells %}
+            <td class="p-0.5">
+              {% if c.booking %}<a href="{% url 'dashboard:booking_detail' c.booking.pk %}" title="{{ c.booking.code }} · {{ c.booking.user }}" class="flex h-10 w-16 items-center justify-center rounded-lg {% if c.booking.status == 'held' %}bg-amber-200 text-amber-900{% else %}bg-brand text-white{% endif %} font-semibold">{{ c.booking.user.initials }}</a>
+              {% elif c.blocked %}<span class="flex h-10 w-16 items-center justify-center rounded-lg bg-slate-300 text-slate-600">Blocked</span>
+              {% else %}<span class="flex h-10 w-16 items-center justify-center rounded-lg border border-brand-line bg-white text-brand-muted">Free</span>{% endif %}
+            </td>
+          {% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="mt-3 text-xs text-brand-muted">Green = paid booking · amber = slot held while paying · grey = blocked by venue.</p>
+</div>
+{% endblock %}

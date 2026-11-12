@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{% if obj %}Edit{% else %}New{% endif %} {{ r.verbose }}{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard:crud_list' r.slug %}" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand"><i data-lucide="chevron-left" class="h-4 w-4"></i>{{ r.title }}</a>
+<h1 class="mb-5 font-display text-2xl font-bold">{% if obj %}Edit {{ obj }}{% else %}New {{ r.verbose }}{% endif %}</h1>
+<form method="post" enctype="multipart/form-data" class="card max-w-3xl p-6">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% for field in form %}
+      <div class="{% if field.field.widget.input_type == 'textarea' or field.name == 'amenities' or field.name == 'sports' or field.name == 'body' or field.name == 'answer' or field.name == 'about' or field.name == 'rules' %}sm:col-span-2{% endif %}">
+        {% include "dashboard/_field.html" %}
+      </div>
+    {% endfor %}
+  </div>
+  <div class="mt-6 flex justify-end gap-2">
+    <a href="{% url 'dashboard:crud_list' r.slug %}" class="btn btn-ghost">Cancel</a>
+    <button class="btn btn-primary">Save</button>
+  </div>
+</form>
+{% endblock %}

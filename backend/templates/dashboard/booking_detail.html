@@ -1,0 +1,61 @@
+{% extends "dashboard/base.html" %}{% load dash %}
+{% block title %}{{ b.code }}{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard:crud_list' 'bookings' %}" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand"><i data-lucide="chevron-left" class="h-4 w-4"></i>Bookings</a>
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="font-display text-2xl font-bold tracking-wide">{{ b.code }}</h1>
+    <p class="text-sm text-brand-muted">Created {{ b.created_at|date:"d M Y, h:i A" }}</p></div>
+  <div class="flex flex-wrap gap-2">
+    <span class="rounded-full px-3 py-1 text-sm font-semibold {{ b.status|badge_class }}">{{ b.get_status_display }}</span>
+    <span class="rounded-full px-3 py-1 text-sm font-semibold {{ b.payment_status|badge_class }}">{{ b.get_payment_status_display }}</span>
+    {% if b.checked_in_at %}<span class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">Checked in {{ b.checked_in_at|date:"h:i A" }}</span>{% endif %}
+  </div>
+</div>
+<div class="grid gap-4 lg:grid-cols-3">
+  <section class="card p-5 lg:col-span-2">
+    <h2 class="mb-4 font-display text-lg font-bold">Booking</h2>
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-3">
+      <div><dt class="text-xs text-brand-muted">Venue</dt><dd class="font-semibold"><a href="{% url 'dashboard:venue_detail' b.venue_id %}" class="hover:text-brand">{{ b.venue }}</a></dd></div>
+      <div><dt class="text-xs text-brand-muted">Court</dt><dd class="font-semibold">{{ b.court.name }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Sport</dt><dd class="font-semibold" style="color:{{ b.sport.fg_color }}">{{ b.sport }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Date</dt><dd class="font-semibold">{{ b.date|date:"D, d M Y" }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Time</dt><dd class="font-semibold">{{ b.start_hour|hour }} – {{ b.end_hour|hour }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Duration</dt><dd class="font-semibold">{{ b.duration }} hr{{ b.duration|pluralize }}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Player</dt><dd class="font-semibold">{% if is_admin %}<a href="{% url 'dashboard:user_detail' b.user_id %}" class="hover:text-brand">{{ b.user }}</a>{% else %}{{ b.user }}{% endif %}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Email · phone</dt><dd class="font-semibold">{{ b.user.email }}{% if b.user.phone %}<br>{{ b.user.phone }}{% endif %}</dd></div>
+      <div><dt class="text-xs text-brand-muted">Rescheduled</dt><dd class="font-semibold">{{ b.reschedule_count }}×</dd></div>
+    </dl>
+    <h3 class="mb-2 mt-6 font-display font-bold">Payment</h3>
+    <div class="space-y-2 rounded-xl bg-brand-ground p-4 text-sm">
+      <div class="flex justify-between"><span class="text-brand-muted">Slot charges ({{ b.peak_hours }} peak hr)</span><span>{{ b.slot_amount|inr }}</span></div>
+      <div class="flex justify-between"><span class="text-brand-muted">Convenience fee</span><span>{{ b.convenience_fee|inr }}</span></div>
+      <div class="flex justify-between"><span class="text-brand-muted">GST</span><span>{{ b.gst|inr }}</span></div>
+      {% if b.discount %}<div class="flex justify-between text-brand"><span>Coupon {{ b.coupon }}</span><span>−{{ b.discount|inr }}</span></div>{% endif %}
+      <div class="flex justify-between border-t border-brand-line pt-2 font-bold"><span>Total {% if b.payment_method %}via {{ b.get_payment_method_display }}{% endif %}</span><span>{{ b.total|inr }}</span></div>
+      {% if b.transaction_id %}<p class="text-xs text-brand-muted">Txn {{ b.transaction_id }} · {{ b.paid_at|date:"d M, h:i A" }}</p>{% endif %}
+      {% if b.status == "cancelled" %}<p class="text-xs font-semibold text-orange-700">Cancelled {{ b.cancelled_at|date:"d M h:i A" }} · {{ b.cancellation_code }} · refund {{ b.refund_amount|inr }} · {{ b.cancel_reason }}</p>{% endif %}
+    </div>
+  </section>
+  <aside class="space-y-4">
+    <section class="card p-5">
+      <h2 class="mb-3 font-display text-lg font-bold">Actions</h2>
+      <div class="flex flex-col gap-2">
+        {% if b.status == "confirmed" %}
+          {% if not b.checked_in_at %}<button type="button" class="btn btn-primary justify-center" data-action-url="{% url 'dashboard:booking_action' b.pk 'checkin' %}"><i data-lucide="check"></i>Check in now</button>{% endif %}
+          <button type="button" class="btn btn-ghost justify-center" data-action-url="{% url 'dashboard:booking_action' b.pk 'complete' %}">Mark completed</button>
+          <button type="button" class="btn btn-danger justify-center" data-action-url="{% url 'dashboard:booking_action' b.pk 'cancel' %}"
+                  data-confirm-title="Cancel and refund?" data-confirm="Venue-side cancellation refunds the full {{ b.total|inr }} to the player." data-yes="Cancel booking">Cancel (full refund)</button>
+          {% if quote %}<p class="text-xs text-brand-muted">If the player cancels now they get {{ quote.percent }}% → {{ quote.refund|inr }}.</p>{% endif %}
+        {% endif %}
+        {% if is_admin %}<a href="{% url 'dashboard:crud_edit' 'bookings' b.pk %}" class="btn btn-ghost justify-center"><i data-lucide="pencil"></i>Edit raw fields</a>{% endif %}
+      </div>
+    </section>
+    <form method="post" action="{% url 'dashboard:booking_action' b.pk 'notes' %}" class="card p-5">
+      {% csrf_token %}
+      <label for="notes" class="mb-2 block font-display text-lg font-bold">Internal notes</label>
+      <textarea id="notes" name="notes" rows="4" class="w-full rounded-xl border border-brand-line p-3 text-sm outline-none focus:border-brand">{{ b.notes }}</textarea>
+      <button class="btn btn-ghost mt-2">Save notes</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

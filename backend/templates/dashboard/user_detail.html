@@ -1,0 +1,47 @@
+{% extends "dashboard/base.html" %}{% load dash %}
+{% block title %}{{ u }}{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard:crud_list' 'users' %}" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand"><i data-lucide="chevron-left" class="h-4 w-4"></i>Players</a>
+<div class="card mb-4 flex flex-wrap items-center gap-4 p-5">
+  <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-lime font-display text-2xl font-bold">{{ u.initials }}</span>
+  <div class="flex-1"><h1 class="font-display text-2xl font-bold">{{ u.name|default:"Unnamed player" }}</h1>
+    <p class="text-sm text-brand-muted">{{ u.email }} · {{ u.phone|default:"no phone" }}{% if u.address %} · {{ u.address }}{% endif %} · joined {{ u.date_joined|date:"d M Y" }} · referral {{ u.referral_code }}</p></div>
+  <a href="{% url 'dashboard:crud_edit' 'users' u.pk %}" class="btn btn-ghost"><i data-lucide="pencil"></i>Edit</a>
+</div>
+<div class="grid gap-4 lg:grid-cols-3">
+  <section class="card p-5">
+    <h2 class="mb-3 font-display text-lg font-bold">Wallet</h2>
+    <p class="font-display text-3xl font-bold" id="walletBal">{{ u.wallet_balance|inr }}</p>
+    <form id="walletForm" class="mt-3 flex gap-2">
+      <label for="amt" class="sr-only">Amount</label>
+      <input id="amt" name="amount" type="number" placeholder="+100 or -50" class="h-10 flex-1 rounded-xl border border-brand-line px-3 text-sm">
+      <button class="btn btn-primary">Apply</button>
+    </form>
+    <p class="mt-4 text-sm text-brand-muted">Lifetime spend <strong class="text-brand-ink">{{ spent|inr }}</strong></p>
+    <h3 class="mt-4 mb-2 font-display font-bold">Sports</h3>
+    {% for s in sports %}<p class="text-sm">{{ s.sport }} · {{ s.get_level_display }}</p>{% empty %}<p class="text-sm text-brand-muted">None set.</p>{% endfor %}
+    <h3 class="mt-4 mb-2 font-display font-bold">Groups</h3>
+    {% for g in groups %}<p class="text-sm">{{ g }}</p>{% empty %}<p class="text-sm text-brand-muted">None.</p>{% endfor %}
+  </section>
+  <section class="card overflow-hidden lg:col-span-2">
+    <h2 class="px-5 pt-5 font-display text-lg font-bold">Bookings</h2>
+    <ul class="divide-y divide-brand-line">
+      {% for b in bookings %}
+        <li><a href="{% url 'dashboard:booking_detail' b.pk %}" class="flex justify-between gap-3 px-5 py-3 text-sm hover:bg-brand-ground">
+          <span>{{ b.code }} · {{ b.venue }} · {{ b.date|date:"d M" }} {{ b.start_hour|hour }}</span>
+          <span class="flex gap-2"><strong>{{ b.total|inr }}</strong><span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ b.status|badge_class }}">{{ b.get_status_display }}</span></span></a></li>
+      {% empty %}<li class="px-5 py-5 text-sm text-brand-muted">No bookings.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+$('#walletForm').on('submit', function (e) {
+  e.preventDefault();
+  $.post("{% url 'dashboard:user_wallet' u.pk %}", $(this).serialize()).done(function (r) {
+    $('#walletBal').text('₹' + r.balance.toLocaleString('en-IN')); $('#amt').val(''); toast('Wallet updated');
+  });
+});
+</script>
+{% endblock %}

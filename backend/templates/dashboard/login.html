@@ -1,0 +1,29 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="{% static 'brand/icon.png' %}">
+  <title>Sign in · Turflet Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+</head>
+<body class="flex min-h-screen items-center justify-center bg-[#F5F8F3] p-4" style="font-family:Inter,sans-serif;color:#10231A">
+  <div class="pointer-events-none fixed -right-24 -top-24 h-80 w-80 rounded-full bg-[#E3F7C8]"></div>
+  <div class="pointer-events-none fixed -bottom-20 -left-24 h-64 w-64 rounded-full bg-[#DBEAFE]"></div>
+  <form method="post" class="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-[0_20px_44px_rgba(16,35,26,0.12)]">
+    {% csrf_token %}
+    <div class="mb-6 flex items-center gap-2.5">
+      <img src="{% static 'brand/icon.png' %}" alt="" class="h-11 w-11">
+      <span style="font-family:'Space Grotesk'" class="text-2xl font-bold">Turflet admin</span>
+    </div>
+    {% if error %}<p class="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">{{ error }}</p>{% endif %}
+    <label for="email" class="text-sm font-semibold">Email</label>
+    <input id="email" name="email" type="email" required autocomplete="username" placeholder="you@turflet.app" class="mt-1 mb-4 h-12 w-full rounded-xl border border-[#E3E9E1] bg-[#F5F8F3] px-3 outline-none focus:border-[#16803C]">
+    <label for="password" class="text-sm font-semibold">Password</label>
+    <input id="password" name="password" type="password" required class="mt-1 mb-6 h-12 w-full rounded-xl border border-[#E3E9E1] bg-[#F5F8F3] px-3 outline-none focus:border-[#16803C]">
+    <button class="h-12 w-full rounded-2xl bg-[#16803C] font-semibold text-white shadow-[0_10px_24px_rgba(22,128,60,0.28)] hover:bg-[#0F5E2C]">Sign in</button>
+    <a href="{% url 'dashboard:login_code' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl border border-[#E3E9E1] font-semibold text-[#10231A] hover:bg-[#F5F8F3]">Turf owner? Sign in with an email code</a>
+    <p class="mt-4 text-center text-xs text-[#56695E]">Admins and turf owners only. Create an admin with <code>python manage.py createsuperuser</code>.</p>
+  </form>
+</body>
+</html>

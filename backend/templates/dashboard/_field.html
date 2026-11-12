@@ -1,0 +1,11 @@
+<div class="{% if field.field.widget.input_type == 'checkbox' %}flex items-center gap-3 rounded-xl border border-brand-line bg-white px-3 py-3{% endif %}">
+  {% if field.field.widget.input_type == 'checkbox' %}
+    {{ field }}<label for="{{ field.id_for_label }}" class="text-sm font-semibold">{{ field.label }}</label>
+  {% else %}
+    <label for="{{ field.id_for_label }}" class="mb-1 block text-sm font-semibold">{{ field.label }}{% if field.field.required %} <span class="text-red-600">*</span>{% endif %}</label>
+    {% if field.value and field.field.widget.input_type == 'file' %}<img src="{{ field.value.url }}" class="js-preview mb-2 h-28 w-40 rounded-xl object-cover" alt="">{% endif %}
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<p class="mt-1 text-xs text-brand-muted">{{ field.help_text }}</p>{% endif %}
+  {% for e in field.errors %}<p class="mt-1 text-xs font-semibold text-red-700">{{ e }}</p>{% endfor %}
+</div>

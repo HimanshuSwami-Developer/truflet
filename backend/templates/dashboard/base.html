@@ -1,0 +1,117 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="{% static 'brand/icon.png' %}">
+  <title>{% block title %}Dashboard{% endblock %} · Turflet Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#16803C', 50: '#DCFCE7', 100: '#BBF7D0', 700: '#0F5E2C', ink: '#10231A', muted: '#56695E', ground: '#F5F8F3', lime: '#B7F35A', line: '#E3E9E1' }
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['"Space Grotesk"', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>[x-cloak]{display:none}</style>
+</head>
+<body class="bg-brand-ground font-sans text-brand-ink antialiased">
+<div class="flex min-h-screen">
+  <!-- sidebar -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-y-auto border-r border-brand-line bg-white transition-transform lg:translate-x-0">
+    <a href="{% url 'dashboard:home' %}" class="flex items-center gap-2.5 px-5 py-5">
+      <img src="{% static 'brand/icon.png' %}" alt="" class="h-10 w-10">
+      <span class="font-display text-xl font-bold tracking-tight">Turflet <span class="text-sm font-medium text-brand-muted">{% if is_admin %}admin{% else %}owner{% endif %}</span></span>
+    </a>
+    <nav class="px-3 pb-8 text-sm">
+      <a href="{% url 'dashboard:home' %}" class="nav-link {% if path == '/admin-panel/' %}active{% endif %}"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+      <a href="{% url 'dashboard:checkin' %}" class="nav-link {% if 'checkin' in path %}active{% endif %}"><i data-lucide="scan-line"></i>Check-in desk</a>
+      {% for section, items in nav.items %}
+        <p class="mt-5 mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-muted">{{ section }}</p>
+        {% for r in items %}
+          <a href="{% url 'dashboard:crud_list' r.slug %}" class="nav-link {% if '/r/'|add:r.slug|add:'/' in path %}active{% endif %}">
+            <i data-lucide="{{ r.icon }}"></i>{{ r.title }}
+            {% if r.slug == 'tickets' and open_tickets %}<span class="ml-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">{{ open_tickets }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      {% endfor %}
+      {% if is_admin %}
+      <p class="mt-5 mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-muted">System</p>
+      <a href="{% url 'dashboard:broadcast' %}" class="nav-link {% if 'broadcast' in path %}active{% endif %}"><i data-lucide="megaphone"></i>Broadcast</a>
+      <a href="{% url 'dashboard:settings' %}" class="nav-link {% if 'settings' in path %}active{% endif %}"><i data-lucide="settings"></i>App settings</a>
+      {% endif %}
+    </nav>
+  </aside>
+  <div id="backdrop" class="fixed inset-0 z-30 hidden bg-black/30 lg:hidden"></div>
+
+  <div class="flex min-w-0 flex-1 flex-col lg:pl-64">
+    <!-- top bar -->
+    <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-brand-line bg-white/90 px-4 backdrop-blur sm:px-6">
+      <button id="menuBtn" type="button" class="rounded-lg p-2 hover:bg-slate-100 lg:hidden" aria-label="Open menu"><i data-lucide="menu"></i></button>
+      <div class="relative w-full max-w-md">
+        <label for="globalSearch" class="sr-only">Search</label>
+        <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted"></i>
+        <input id="globalSearch" type="search" autocomplete="off" placeholder="{% if is_admin %}Search bookings, venues, players…{% else %}Search bookings or your grounds…{% endif %}"
+               class="h-10 w-full rounded-xl border border-brand-line bg-brand-ground pl-9 pr-3 text-sm outline-none focus:border-brand focus:bg-white">
+        <div id="globalResults" class="absolute left-0 right-0 top-12 hidden overflow-hidden rounded-xl border border-brand-line bg-white shadow-xl"></div>
+      </div>
+      <div class="ml-auto flex items-center gap-3">
+        <span class="hidden text-sm text-brand-muted sm:inline">{{ request.user.name|default:request.user.email }}</span>
+        <a href="{% url 'dashboard:logout' %}" class="rounded-lg border border-brand-line px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Log out</a>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      {% if messages %}
+        <div class="mb-4 space-y-2">
+          {% for m in messages %}
+            <div class="flash flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium {% if m.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-brand-50 text-brand-700{% endif %}">
+              <span>{{ m }}</span><button type="button" class="flash-close opacity-60 hover:opacity-100" aria-label="Dismiss">✕</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<!-- confirm modal -->
+<div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+    <h3 class="font-display text-lg font-bold" id="confirmTitle">Are you sure?</h3>
+    <p class="mt-1 text-sm text-brand-muted" id="confirmText">This cannot be undone.</p>
+    <div class="mt-5 flex justify-end gap-2">
+      <button type="button" id="confirmNo" class="rounded-xl border border-brand-line px-4 py-2 text-sm font-semibold">Cancel</button>
+      <button type="button" id="confirmYes" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="fixed bottom-5 right-5 z-50 hidden rounded-xl bg-brand-ink px-4 py-3 text-sm font-medium text-white shadow-xl"></div>
+
+<style>
+  .nav-link{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:.75rem;color:#3F5247;font-weight:500}
+  .nav-link svg{width:18px;height:18px;flex-shrink:0}
+  .nav-link:hover{background:#F1F4EF}
+  .nav-link.active{background:#DCFCE7;color:#0F5E2C;font-weight:700}
+  .card{background:#fff;border:1px solid #E3E9E1;border-radius:1.25rem}
+  .btn{display:inline-flex;align-items:center;gap:.4rem;height:2.5rem;padding:0 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600}
+  .btn-primary{background:#16803C;color:#fff}.btn-primary:hover{background:#0F5E2C}
+  .btn-ghost{border:1px solid #E3E9E1;background:#fff}.btn-ghost:hover{background:#F8FAF7}
+  .btn-danger{background:#FEF2F2;color:#B91C1C}.btn-danger:hover{background:#FEE2E2}
+  .btn svg{width:16px;height:16px}
+</style>
+<script>window.CSRF = "{{ csrf_token }}";</script>
+<script src="{% static 'dashboard/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Broadcast{% endblock %}
+{% block content %}
+<h1 class="mb-1 font-display text-2xl font-bold">Broadcast a notification</h1>
+<p class="mb-5 text-sm text-brand-muted">Appears in the bell on the app's Explore screen for players with notifications on.</p>
+<form method="post" class="card max-w-xl space-y-4 p-6">
+  {% csrf_token %}
+  <div><label for="title" class="mb-1 block text-sm font-semibold">Title</label><input id="title" name="title" required maxlength="120" class="h-11 w-full rounded-xl border border-brand-line px-3 text-sm outline-none focus:border-brand" placeholder="Weekend offer: ₹100 off"></div>
+  <div><label for="body" class="mb-1 block text-sm font-semibold">Message</label><textarea id="body" name="body" maxlength="255" rows="3" class="w-full rounded-xl border border-brand-line p-3 text-sm outline-none focus:border-brand"></textarea><p class="mt-1 text-xs text-brand-muted"><span id="cnt">0</span>/255</p></div>
+  <div><label for="audience" class="mb-1 block text-sm font-semibold">Audience</label>
+    <select id="audience" name="audience" class="h-11 w-full rounded-xl border border-brand-line px-3 text-sm"><option value="all">All players</option><option value="bookers">Players who have booked</option></select></div>
+  <button class="btn btn-primary"><i data-lucide="send"></i>Send</button>
+</form>
+{% endblock %}
+{% block scripts %}<script>$('#body').on('input', function(){ $('#cnt').text(this.value.length); });</script>{% endblock %}

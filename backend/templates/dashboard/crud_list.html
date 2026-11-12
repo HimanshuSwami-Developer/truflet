@@ -1,0 +1,25 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{{ r.title }}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="font-display text-2xl font-bold">{{ r.title }}</h1>
+    {% if r.help %}<p class="mt-1 max-w-2xl text-sm text-brand-muted">{{ r.help }}</p>{% endif %}
+  </div>
+  {% if r.can_create %}<a href="{% url 'dashboard:crud_create' r.slug %}" class="btn btn-primary"><i data-lucide="plus"></i>New {{ r.verbose }}</a>{% endif %}
+</div>
+<form id="crudFilters" class="mb-4 flex flex-wrap gap-2">
+  {% if r.search %}
+    <label class="sr-only" for="q">Search</label>
+    <input id="q" name="q" value="{{ q }}" placeholder="Search {{ r.title|lower }}…" class="h-10 w-full max-w-xs rounded-xl border border-brand-line bg-white px-3 text-sm outline-none focus:border-brand">
+  {% endif %}
+  {% for f in filters %}
+    <label class="sr-only" for="f-{{ f.name }}">{{ f.label }}</label>
+    <select id="f-{{ f.name }}" name="{{ f.name }}" class="h-10 rounded-xl border border-brand-line bg-white px-3 text-sm">
+      <option value="">All · {{ f.label }}</option>
+      {% for val, label in f.choices %}<option value="{{ val }}" {% for k, v in active.items %}{% if k == f.name and v|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}{% endfor %}>{{ label }}</option>{% endfor %}
+    </select>
+  {% endfor %}
+</form>
+<div id="crudList" class="transition-opacity">{% include "dashboard/_table.html" %}</div>
+{% endblock %}

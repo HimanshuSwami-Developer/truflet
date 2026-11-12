@@ -1,0 +1,94 @@
+{% extends "dashboard/base.html" %}{% load dash humanize %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="font-display text-3xl font-bold tracking-tight">Good {% now "A" as ampm %}{% if ampm == "AM" %}morning{% else %}evening{% endif %}</h1>
+    <p class="text-sm text-brand-muted">{% now "l, j F Y" %} · {% if is_admin %}here's how Turflet is doing{% else %}here's how your grounds are doing{% endif %}</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'dashboard:checkin' %}" class="btn btn-ghost"><i data-lucide="scan-line"></i>Check-in</a>
+    <a href="{% url 'dashboard:crud_create' 'venues' %}" class="btn btn-primary"><i data-lucide="plus"></i>{% if is_admin %}Add venue{% else %}Add a ground{% endif %}</a>
+  </div>
+</div>
+
+{% if stats.pending_venues %}
+  <a href="{% url 'dashboard:crud_list' 'venues' %}?is_active=0" class="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <i data-lucide="clock" class="h-5 w-5 shrink-0"></i>
+    <span class="flex-1">{% if is_admin %}<strong>{{ stats.pending_venues }} owner ground{{ stats.pending_venues|pluralize }}</strong> waiting for approval. Review and switch them to Active to list them in the app.{% else %}<strong>{{ stats.pending_venues }} ground{{ stats.pending_venues|pluralize }}</strong> waiting for approval by the Turflet team. Meanwhile, add courts, sports &amp; pricing and photos.{% endif %}</span>
+    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+  </a>
+{% elif not is_admin and not top_venues %}
+  <div class="card mb-4 p-6 text-center">
+    <h2 class="font-display text-lg font-bold">Welcome to Turflet</h2>
+    <p class="mx-auto mt-1 max-w-md text-sm text-brand-muted">Add your first ground: name, address, hours, then courts, sports &amp; pricing and photos. Once the Turflet team approves it, players can book it in the app.</p>
+    <a href="{% url 'dashboard:crud_create' 'venues' %}" class="btn btn-primary mt-4"><i data-lucide="plus"></i>Add a ground</a>
+  </div>
+{% endif %}
+
+<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  {% for s in "x"|make_list %}{% endfor %}
+  <div class="card p-4"><p class="text-xs text-brand-muted">Bookings today</p><p class="font-display text-3xl font-bold">{{ stats.today_bookings }}</p><p class="text-xs text-brand-muted">{{ stats.today_checked_in }} checked in</p></div>
+  <div class="card p-4"><p class="text-xs text-brand-muted">Revenue this month</p><p class="font-display text-3xl font-bold text-brand">{{ stats.month_revenue|inr }}</p><p class="text-xs text-brand-muted">Refunds {{ stats.refunds|inr }}</p></div>
+  {% if is_admin %}
+  <div class="card p-4"><p class="text-xs text-brand-muted">Players</p><p class="font-display text-3xl font-bold">{{ stats.users|intcomma }}</p><p class="text-xs text-brand-muted">+{{ stats.new_users }} this week</p></div>
+  <div class="card p-4"><p class="text-xs text-brand-muted">Live venues</p><p class="font-display text-3xl font-bold">{{ stats.venues }}</p><p class="text-xs text-brand-muted">{{ stats.live_tournaments }} live tournament{{ stats.live_tournaments|pluralize }}</p></div>
+  {% else %}
+  <div class="card p-4"><p class="text-xs text-brand-muted">Upcoming bookings</p><p class="font-display text-3xl font-bold">{{ stats.upcoming_bookings }}</p><p class="text-xs text-brand-muted">after today</p></div>
+  <div class="card p-4"><p class="text-xs text-brand-muted">Live grounds</p><p class="font-display text-3xl font-bold">{{ stats.venues }}</p><p class="text-xs text-brand-muted">{{ stats.pending_venues }} waiting for approval</p></div>
+  {% endif %}
+</div>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-3">
+  <section class="card p-5 lg:col-span-2">
+    <div class="mb-4 flex items-center justify-between"><h2 class="font-display text-lg font-bold">Revenue · last 14 days</h2></div>
+    <div class="flex h-48 items-end gap-1.5">
+      {% for d in days %}
+        <div class="group relative flex h-full flex-1 flex-col justify-end">
+          <div class="rounded-t-md bg-brand/80 transition group-hover:bg-brand" style="height: {{ d.pct }}%; min-height: 3px"></div>
+          <span class="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-ink px-2 py-0.5 text-[11px] text-white group-hover:block">{{ d.label }} · {{ d.amount|inr }}</span>
+          <span class="mt-1 text-center text-[10px] text-brand-muted">{{ d.short }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="card p-5">
+    <h2 class="mb-3 font-display text-lg font-bold">{% if is_admin %}Top venues{% else %}Your grounds{% endif %}</h2>
+    <ul class="space-y-3">
+      {% for v in top_venues %}
+        <li class="flex items-center justify-between gap-3 text-sm">
+          <a href="{% url 'dashboard:venue_detail' v.pk %}" class="truncate font-semibold hover:text-brand">{{ v.name }}</a>
+          <span class="shrink-0 text-brand-muted">{{ v.n }} · <strong class="text-brand-ink">{{ v.rev|default:0|inr }}</strong></span>
+        </li>
+      {% empty %}<li class="text-sm text-brand-muted">No paid bookings yet.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  <section class="card overflow-hidden">
+    <h2 class="px-5 pt-5 font-display text-lg font-bold">Today's games</h2>
+    <ul class="divide-y divide-brand-line">
+      {% for b in upcoming %}
+        <li><a href="{% url 'dashboard:booking_detail' b.pk %}" class="flex items-center gap-3 px-5 py-3 text-sm hover:bg-brand-ground">
+          <span class="w-14 font-display font-bold">{{ b.start_hour|hour }}</span>
+          <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ b.venue }} · {{ b.court.name }}</span><span class="text-brand-muted">{{ b.user }} · {{ b.duration }} hr</span></span>
+          {% if b.checked_in_at %}<span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">In</span>{% endif %}
+        </a></li>
+      {% empty %}<li class="px-5 py-6 text-sm text-brand-muted">No more games today.</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card overflow-hidden">
+    <h2 class="px-5 pt-5 font-display text-lg font-bold">Recent bookings</h2>
+    <ul class="divide-y divide-brand-line">
+      {% for b in recent %}
+        <li><a href="{% url 'dashboard:booking_detail' b.pk %}" class="flex items-center gap-3 px-5 py-3 text-sm hover:bg-brand-ground">
+          <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ b.code }} · {{ b.venue }}</span><span class="text-brand-muted">{{ b.user }} · {{ b.created_at|timesince }} ago</span></span>
+          <span class="font-semibold">{{ b.total|inr }}</span>
+          <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ b.status|badge_class }}">{{ b.get_status_display }}</span>
+        </a></li>
+      {% empty %}<li class="px-5 py-6 text-sm text-brand-muted">No bookings yet.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% load dash %}
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-brand-line bg-brand-ground text-xs uppercase tracking-wide text-brand-muted">
+        <tr>{% for c in r.columns %}<th class="whitespace-nowrap px-4 py-3 font-semibold">{{ c.label }}</th>{% endfor %}<th class="px-4 py-3"></th></tr>
+      </thead>
+      <tbody class="divide-y divide-brand-line">
+        {% for obj in page %}
+          <tr data-row class="hover:bg-brand-ground/60">
+            {% for c in r.columns %}
+              <td class="whitespace-nowrap px-4 py-3">
+                {% if c.kind == "bool" and c.path in r.toggles %}
+                  <button type="button" data-toggle-url="{% url 'dashboard:crud_toggle' r.slug obj.pk c.path %}" class="inline-flex h-6 items-center rounded-full px-2 text-xs font-semibold {% cell obj c as v %}{% if 'Yes' in v %}bg-green-100 text-green-800{% else %}bg-slate-100 text-slate-500{% endif %}">{% if 'Yes' in v %}Yes{% else %}No{% endif %}</button>
+                {% elif forloop.first or c.path == "name" and forloop.counter == 2 %}
+                  {% if r.detail_url or r.can_edit %}<a class="font-semibold hover:text-brand" href="{% if r.detail_url %}{% url r.detail_url obj.pk %}{% else %}{% url 'dashboard:crud_edit' r.slug obj.pk %}{% endif %}">{% cell obj c %}</a>{% else %}<span class="font-semibold">{% cell obj c %}</span>{% endif %}
+                {% else %}{% cell obj c %}{% endif %}
+              </td>
+            {% endfor %}
+            <td class="whitespace-nowrap px-4 py-3 text-right">
+              {% if r.detail_url %}<a href="{% url r.detail_url obj.pk %}" class="mr-2 text-sm font-semibold text-brand">Open</a>{% endif %}
+              {% if r.can_edit %}<a href="{% url 'dashboard:crud_edit' r.slug obj.pk %}" class="mr-2 text-sm font-semibold text-slate-600 hover:text-brand">Edit</a>{% endif %}
+              {% if r.can_delete %}<button type="button" data-delete-url="{% url 'dashboard:crud_delete' r.slug obj.pk %}" class="text-sm font-semibold text-red-600 hover:text-red-800">Delete</button>{% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="{{ r.columns|length|add:1 }}" class="px-4 py-12 text-center text-brand-muted">Nothing here yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="flex items-center justify-between border-t border-brand-line px-4 py-3 text-sm text-brand-muted">
+    <span>{{ total }} total</span>
+    <span class="flex gap-2">
+      {% if page.has_previous %}<a href="#" data-page="{{ page.previous_page_number }}" class="btn btn-ghost h-8">Prev</a>{% endif %}
+      <span class="self-center">Page {{ page.number }} / {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a href="#" data-page="{{ page.next_page_number }}" class="btn btn-ghost h-8">Next</a>{% endif %}
+    </span>
+  </div>
+</div>
