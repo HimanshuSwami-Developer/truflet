@@ -68,10 +68,12 @@ class GroupGame(models.Model):
 
 
 class OpenGame(TimeStamped):
-    """A booking opened to strangers. The host pays the slot; each player who joins pays a share,
-    which is credited to the host's wallet."""
+    """A booking with spots published to players in the city. The host pays the slot; each player who
+    joins pays a share, which is credited to the host's wallet. For a group game, the group's members
+    already hold [reserved_spots] and only the rest are public."""
     booking = models.OneToOneField("bookings.Booking", on_delete=models.CASCADE, related_name="open_game")
     total_players = models.PositiveSmallIntegerField(help_text="Including the host")
+    reserved_spots = models.PositiveSmallIntegerField(default=1, help_text="Taken before publishing: host, or the whole group")
 
     class Meta:
         ordering = ["-created_at"]
@@ -89,7 +91,11 @@ class OpenGame(TimeStamped):
 
     @property
     def spots_left(self):
-        return max(0, self.total_players - 1 - self.active_players().count())
+        return max(0, self.total_players - self.reserved_spots - self.active_players().count())
+
+    @property
+    def taken(self):
+        return self.reserved_spots + self.active_players().count()
 
 
 class OpenGamePlayer(TimeStamped):

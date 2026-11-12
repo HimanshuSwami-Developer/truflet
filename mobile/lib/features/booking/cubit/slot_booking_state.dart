@@ -17,6 +17,9 @@ class SlotBookingState {
   final bool openGame;
   final int openPlayers;
 
+  /// Group game: publish the spots the group doesn't fill to players in the city.
+  final bool publishSpots;
+
   const SlotBookingState({
     required this.venue,
     required this.reschedule,
@@ -32,7 +35,17 @@ class SlotBookingState {
     this.group,
     this.openGame = false,
     this.openPlayers = 10,
+    this.publishSpots = true,
   });
+
+  /// Players already coming: the whole group, or just me.
+  int get reserved => group != null ? ((group!['member_count'] as int?) ?? 1) : 1;
+
+  /// Spots that will be listed for strangers in the city.
+  int get publicSpots => (openPlayers - reserved).clamp(0, 999);
+
+  /// Whether this booking publishes open spots.
+  bool get publishes => openGame || (group != null && publishSpots && publicSpots > 0);
 
   /// Most players the selected sport allows on a court.
   int get maxPlayers => ((sports.isEmpty ? null : sport['max_players']) as int?) ?? 16;
@@ -82,6 +95,7 @@ class SlotBookingState {
     bool? loading,
     bool? busy,
     int? openPlayers,
+    bool? publishSpots,
   }) => SlotBookingState(
     venue: venue,
     reschedule: reschedule,
@@ -97,5 +111,6 @@ class SlotBookingState {
     group: group,
     openGame: openGame,
     openPlayers: openPlayers ?? this.openPlayers,
+    publishSpots: publishSpots ?? this.publishSpots,
   );
 }

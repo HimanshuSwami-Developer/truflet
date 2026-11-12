@@ -277,7 +277,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                         ),
                       ),
                     ],
-                    if (st.openGame) _openPlayers(st),
+                    if (st.openGame || st.group != null) _openPlayers(st),
                     Container(
                       margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                       padding: const EdgeInsets.all(16),
@@ -422,7 +422,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
     );
   }
 
-  /// Open game: how many players in total (including you). Each stranger pays total ÷ players.
+  /// Open / group game: how many players in total. Strangers pay total ÷ players each.
   Widget _openPlayers(SlotBookingState st) {
     final n = st.openPlayers;
     Widget btn(String label, bool primary, VoidCallback onTap, String semantics) => Semantics(
@@ -446,6 +446,31 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
         ),
       ),
     );
+    final group = st.group;
+    final stepper = Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Total players', style: t(13, w: FontWeight.w600)),
+              Text(
+                group != null
+                    ? '${st.reserved} in ${group['name']} · up to ${st.maxPlayers}'
+                    : 'Including you · up to ${st.maxPlayers}',
+                style: t(12, c: C.muted),
+              ),
+            ],
+          ),
+        ),
+        btn('−', false, () => _cubit.setOpenPlayers(n - 1), 'Fewer players'),
+        SizedBox(
+          width: 48,
+          child: Text('$n', textAlign: TextAlign.center, style: d(20)),
+        ),
+        btn('+', true, () => _cubit.setOpenPlayers(n + 1), 'More players'),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
@@ -455,23 +480,43 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: C.line),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Total players', style: t(13, w: FontWeight.w600)),
-                  Text('Including you · up to ${st.maxPlayers}', style: t(12, c: C.muted)),
-                ],
+            stepper,
+            if (group != null) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: C.divider),
+              const SizedBox(height: 12),
+              Semantics(
+                toggled: st.publishSpots,
+                child: GestureDetector(
+                  onTap: st.publicSpots > 0 ? _cubit.togglePublish : null,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Publish open spots', style: t(13, w: FontWeight.w600)),
+                            Text(
+                              st.publicSpots == 0
+                                  ? 'Your group fills this game — nothing to publish.'
+                                  : st.publishSpots
+                                  ? '${st.publicSpots} spot${st.publicSpots == 1 ? '' : 's'} shown to players in your city. They pay their share to you.'
+                                  : 'Only your group will play.',
+                              style: t(12, c: C.muted, h: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Toggle(st.publishSpots && st.publicSpots > 0),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            btn('−', false, () => _cubit.setOpenPlayers(n - 1), 'Fewer players'),
-            SizedBox(
-              width: 48,
-              child: Text('$n', textAlign: TextAlign.center, style: d(20)),
-            ),
-            btn('+', true, () => _cubit.setOpenPlayers(n + 1), 'More players'),
+            ],
           ],
         ),
       ),

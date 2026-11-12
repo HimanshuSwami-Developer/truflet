@@ -333,39 +333,52 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
             color: Colors.white,
             border: Border(top: BorderSide(color: C.line)),
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('${cur?['name'] ?? ''} from', style: t(12, c: C.muted)),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: inr(cur?['price'] ?? v['price_from']), style: d(24)),
-                        TextSpan(
-                          text: ' /hr',
-                          style: t(13, c: C.muted),
-                        ),
-                      ],
+                  Flexible(
+                    child: Text(
+                      '${cur?['name'] ?? ''} from ',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: t(13, c: C.muted),
+                    ),
+                  ),
+                  Text(inr(cur?['price'] ?? v['price_from']), style: d(22)),
+                  Text(' /hr', style: t(13, c: C.muted)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: GhostButton(
+                      'Solo with strangers',
+                      icon: LucideIcons.userPlus,
+                      height: 52,
+                      bg: C.limeSoft,
+                      fg: C.green900,
+                      border: Colors.transparent,
+                      onTap: cur == null ? null : () => playSolo(context, venue: v, sportId: cur['sport_id']),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: PrimaryButton(
+                      'Select a group',
+                      height: 52,
+                      radius: 16,
+                      fontSize: 14,
+                      trailing: const Icon(LucideIcons.users, color: Colors.white, size: 18),
+                      onTap: cur == null ? null : () => playWithGroup(context, venue: v, sportId: cur['sport_id']),
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 200),
-                    child: PrimaryButton(
-                      'Book a slot',
-                      trailing: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18),
-                      onTap: cur == null ? null : () => choosePlayMode(context, venue: v, sportId: cur['sport_id']),
-                    ),
-                  ),
-                ),
               ),
             ],
           ),

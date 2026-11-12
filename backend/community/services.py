@@ -23,8 +23,16 @@ def _when(booking):
 # ------------------------------------------------------------------ groups
 
 def parse_contact(raw):
-    """Email or Indian mobile → normalised contact string. Raises ValidationError."""
+    """Email, Indian mobile or referral code → normalised contact. Raises ValidationError."""
     raw = (raw or "").strip()
+    code = raw.upper().replace(" ", "")
+    phone_like = bool(raw) and all(ch.isdigit() or ch in "+-() " for ch in raw)
+    if raw and not phone_like and "@" not in raw:
+        if not code.startswith("PLAY-") and len(code) == 4:
+            code = f"PLAY-{code}"  # "7KQ2" typed without the prefix
+        if User.objects.filter(referral_code=code).exists():
+            return f"ref:{code}"
+        raise ValidationError({"contact": "No player with that referral code."})
     if "@" in raw:
         email = normalize_email(raw)
         try:
@@ -34,11 +42,13 @@ def parse_contact(raw):
         return email
     digits = "".join(ch for ch in raw if ch.isdigit())
     if len(digits) not in (10, 12):
-        raise ValidationError({"contact": "Enter a valid email address or 10-digit mobile number."})
+        raise ValidationError({"contact": "Enter a mobile number, referral code or email."})
     return normalize_phone(digits)
 
 
 def find_user(contact):
+    if contact.startswith("ref:"):
+        return User.objects.filter(referral_code=contact[4:], is_active=True).first()
     if "@" in contact:
         return User.objects.filter(email=contact, is_active=True).first()
     return User.objects.filter(phone=contact, is_active=True).first()
@@ -138,20 +148,23 @@ def remove_member(group, by, user_id):
 
 def attach_to_hold(booking, user, group_id=None, open_players=None):
     """Called right after a slot hold is created: links it to a group or opens it to strangers."""
+    reserved = 1
     if group_id:
         group = PlayerGroup.objects.filter(pk=group_id).first()
         if not group:
             raise ValidationError({"group": "Group not found."})
         membership(group, user)
         GroupGame.objects.create(booking=booking, group=group)
-    elif open_players:
+        reserved = group.memberships.count()
+    if open_players:
         try:
             n = int(open_players)
         except (TypeError, ValueError):
             raise ValidationError({"open_players": "Pick how many players in total."})
         if n < 2 or n > max(2, booking.players):
             raise ValidationError({"open_players": f"Pick between 2 and {booking.players} players."})
-        OpenGame.objects.create(booking=booking, total_players=n)
+        if n > reserved:  # only publish when the group doesn't fill the game
+            OpenGame.objects.create(booking=booking, total_players=n, reserved_spots=reserved)
 
 
 def on_paid(booking):
@@ -186,16 +199,18 @@ def on_cancelled(booking):
 
 # ------------------------------------------------------------------ open games
 
-def open_games_at(venue):
+def open_games_at(venue=None, city=None):
+    """Upcoming published games at one venue, or anywhere in a city."""
     from django.utils import timezone
 
     from bookings.models import Booking
-    Booking.sync_statuses(Booking.objects.filter(venue=venue))
+    where = {"venue": venue} if venue else {"venue__area__city": city}
+    Booking.sync_statuses(Booking.objects.filter(**where))
     today = timezone.localdate()
     hour = timezone.localtime().hour
-    qs = (OpenGame.objects.filter(booking__venue=venue, booking__status="confirmed")
+    qs = (OpenGame.objects.filter(**{f"booking__{k}": v for k, v in where.items()}, booking__status="confirmed")
           .filter(Q(booking__date__gt=today) | Q(booking__date=today, booking__start_hour__gt=hour))
-          .select_related("booking__user", "booking__sport", "booking__court")
+          .select_related("booking__user", "booking__sport", "booking__court", "booking__venue__area")
           .order_by("booking__date", "booking__start_hour"))
     return list(qs)
 
@@ -210,6 +225,9 @@ def join_open_game(game, user, method, upi_id=""):
         raise ValidationError({"game": "This game is no longer open."})
     if b.user_id == user.id:
         raise ValidationError({"game": "You're hosting this game."})
+    gg = getattr(b, "group_game", None) if hasattr(b, "group_game") else None
+    if gg and gg.group.memberships.filter(user=user).exists():
+        raise ValidationError({"game": f"You're already in this game with {gg.group.name}."})
     existing = game.players.filter(user=user).first()
     if existing and existing.status == "joined":
         raise ValidationError({"game": "You've already joined this game."})

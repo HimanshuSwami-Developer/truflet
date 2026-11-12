@@ -28,6 +28,9 @@ class CommunityRepository {
   /// Upcoming games at a venue that strangers can join.
   Future<List<Json>> openGames(int venueId) async => asList(await _api.get('/venues/$venueId/open-games/'));
 
+  /// The public board: games with open spots anywhere in the city of [areaId].
+  Future<List<Json>> cityGames(int areaId) async => asList(await _api.get('/open-games/', {'area': areaId}));
+
   Future<Json> joinGame(int gameId, {required String method, String upiId = ''}) async =>
       asMap(await _api.post('/open-games/$gameId/join/', {'method': method, 'upi_id': upiId}));
 

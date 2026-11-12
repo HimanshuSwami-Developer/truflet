@@ -51,6 +51,7 @@ api = [
     path("groups/<int:pk>/members/<int:user_id>/remove/", community.group_remove_member),
     path("groups/<int:pk>/leave/", community.group_leave),
     path("venues/<int:pk>/open-games/", community.venue_open_games),
+    path("open-games/", community.city_open_games),
     path("open-games/<int:pk>/join/", community.open_game_join),
     path("open-games/<int:pk>/leave/", community.open_game_leave),
 ]

@@ -45,11 +45,17 @@ class SlotBookingArgs {
   });
 }
 
-/// Arguments for a venue's open games list.
+/// Arguments for the open games list: one venue's games, or every published game in a city.
 class OpenGamesArgs {
-  final Json venue;
+  final Json? venue;
   final int? sportId;
-  const OpenGamesArgs({required this.venue, this.sportId});
+
+  /// City board: games anywhere in the city of this area.
+  final int? areaId;
+  final String cityName;
+  const OpenGamesArgs({this.venue, this.sportId, this.areaId, this.cityName = ''});
+
+  bool get isCity => venue == null;
 }
 
 /// Pass as `extra` to open a route with the splash cross-fade instead of the platform slide.

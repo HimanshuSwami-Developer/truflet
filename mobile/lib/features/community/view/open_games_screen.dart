@@ -13,14 +13,15 @@ import '../../../data/repositories/community_repository.dart';
 import '../../auth/auth_guard.dart';
 import '../cubit/open_games_cubit.dart';
 
-/// Play solo with strangers: open games at this venue, or start a new one.
+/// Play solo with strangers: open games at this venue (or the whole city), or start a new one.
 class OpenGamesScreen extends StatelessWidget {
   final OpenGamesArgs args;
   const OpenGamesScreen({super.key, required this.args});
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (c) => OpenGamesCubit(venueId: args.venue['id'], repository: c.read<CommunityRepository>())..load(),
+    create: (c) =>
+        OpenGamesCubit(venueId: args.venue?['id'], areaId: args.areaId, repository: c.read<CommunityRepository>())..load(),
     child: _OpenGamesView(args: args),
   );
 }
@@ -30,7 +31,7 @@ class _OpenGamesView extends StatelessWidget {
   const _OpenGamesView({required this.args});
 
   Future<void> _startNew(BuildContext context) async {
-    await context.pushSlotBooking(SlotBookingArgs(venue: args.venue, initialSportId: args.sportId, openGame: true));
+    await context.pushSlotBooking(SlotBookingArgs(venue: args.venue!, initialSportId: args.sportId, openGame: true));
     if (context.mounted) context.read<OpenGamesCubit>().load();
   }
 
@@ -64,9 +65,9 @@ class _OpenGamesView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Open games', style: d(20)),
+                      Text(args.isCity ? 'Open games in ${args.cityName}' : 'Open games', style: d(20)),
                       Text(
-                        '${venue['name']} · ${venue['area']}',
+                        venue != null ? '${venue['name']} · ${venue['area']}' : 'Spots published by players in ${args.cityName}',
                         style: t(13, c: C.muted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -115,7 +116,9 @@ class _OpenGamesView extends StatelessWidget {
                             Text('No open games here yet', style: d(18)),
                             const SizedBox(height: 6),
                             Text(
-                              'Start one and players nearby can join.',
+                              args.isCity
+                                  ? 'Check back soon, or start one from any venue.'
+                                  : 'Start one and players nearby can join.',
                               textAlign: TextAlign.center,
                               style: t(14, c: C.muted),
                             ),
@@ -132,18 +135,19 @@ class _OpenGamesView extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            padding: EdgeInsets.fromLTRB(20, 14, 20, 14 + MediaQuery.of(context).padding.bottom),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: C.line)),
+          if (!args.isCity)
+            Container(
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 14 + MediaQuery.of(context).padding.bottom),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: C.line)),
+              ),
+              child: PrimaryButton(
+                'Start a new game',
+                trailing: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18),
+                onTap: () => _startNew(context),
+              ),
             ),
-            child: PrimaryButton(
-              'Start a new game',
-              trailing: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18),
-              onTap: () => _startNew(context),
-            ),
-          ),
         ],
       ),
     );
@@ -173,7 +177,12 @@ class _GameCard extends StatelessWidget {
               SportPill(asMap(g['sport'])),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(g['court'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: t(12, c: C.muted)),
+                child: Text(
+                  g['court'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: t(12, c: C.muted),
+                ),
               ),
               const SizedBox(width: 8),
               Text.rich(
@@ -195,7 +204,13 @@ class _GameCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text('${g['date_label']} · ${g['time_label']}', style: d(17)),
           const SizedBox(height: 2),
-          Text('Hosted by ${g['host']}', style: t(13, c: C.muted)),
+          Text(
+            [
+              if (g['venue'] != null) '${g['venue']['name']}, ${g['venue']['area']}',
+              g['group'] != null ? 'Group ${g['group']} · hosted by ${g['host']}' : 'Hosted by ${g['host']}',
+            ].join('\n'),
+            style: t(13, c: C.muted, h: 1.4),
+          ),
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),

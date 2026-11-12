@@ -27,7 +27,7 @@ class SlotBookingCubit extends Cubit<SlotBookingState> {
       group: a.group,
       openGame: a.openGame,
     );
-    if (a.openGame) s = s.copyWith(openPlayers: s.maxPlayers);
+    if (a.openGame || a.group != null) s = s.copyWith(openPlayers: s.maxPlayers);
     if (a.initialDate != null) {
       final base = DateTime(today.year, today.month, today.day);
       s = s.copyWith(day: a.initialDate!.difference(base).inDays.clamp(0, 13));
@@ -74,7 +74,7 @@ class SlotBookingCubit extends Cubit<SlotBookingState> {
 
   void selectSport(int i) {
     final next = state.copyWith(sportIdx: i, courtIdx: 0);
-    _emit(state.openGame ? next.copyWith(openPlayers: next.maxPlayers) : next);
+    _emit(state.openGame || state.group != null ? next.copyWith(openPlayers: next.maxPlayers) : next);
   }
 
   void selectDay(int i) => _emit(state.copyWith(day: i));
@@ -96,10 +96,12 @@ class SlotBookingCubit extends Cubit<SlotBookingState> {
     'start_hour': state.start,
     'duration': state.dur,
     if (state.group != null) 'group': state.group!['id'],
-    if (state.openGame) 'open_players': state.openPlayers,
+    if (state.publishes) 'open_players': state.openPlayers,
   });
 
   /// Total players for an open game (2 … the sport's max).
+  void togglePublish() => _emit(state.copyWith(publishSpots: !state.publishSpots));
+
   void setOpenPlayers(int n) => _emit(state.copyWith(openPlayers: n.clamp(2, state.maxPlayers)));
 
   void _emit(SlotBookingState s) {

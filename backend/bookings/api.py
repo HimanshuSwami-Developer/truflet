@@ -64,7 +64,7 @@ def social_payload(request, b):
         if b.user_id != me.id:
             role, my_paid = "player", mine.amount if mine else og.share
         data["open_game"] = {
-            "id": og.id, "total_players": og.total_players, "joined_count": 1 + len(joined),
+            "id": og.id, "total_players": og.total_players, "joined_count": og.reserved_spots + len(joined),
             "spots_left": og.spots_left, "share": og.share,
             "players": [b.user.name or "Host"] + [p.user.name or "Player" for p in joined],
         }

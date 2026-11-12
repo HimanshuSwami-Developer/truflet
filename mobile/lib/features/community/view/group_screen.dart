@@ -181,7 +181,7 @@ class _GroupViewState extends State<_GroupView> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Text('Or add by email / mobile number', style: t(12, c: C.muted)),
+                Text('Or add by mobile number, referral code or email', style: t(12, c: C.muted)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -196,13 +196,14 @@ class _GroupViewState extends State<_GroupView> {
                         ),
                         child: TextField(
                           controller: contact,
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.text,
                           autocorrect: false,
+                          textCapitalization: TextCapitalization.characters,
                           style: t(14),
                           onSubmitted: (_) => _add(),
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            hintText: 'friend@email.com or 98765 43210',
+                            hintText: '98765 43210 or PLAY-7KQ2',
                             hintStyle: t(14, c: C.muted),
                           ),
                         ),

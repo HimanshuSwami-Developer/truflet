@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../app/session/app_cubit.dart';
 import '../../../core/network/json.dart';
+import '../../../data/repositories/community_repository.dart';
 import '../../../data/repositories/notification_repository.dart';
 import '../../../data/repositories/venue_repository.dart';
 import 'explore_state.dart';
@@ -12,10 +13,12 @@ import 'explore_state.dart';
 class ExploreCubit extends Cubit<ExploreState> {
   final VenueRepository _venues;
   final NotificationRepository _notifications;
+  final CommunityRepository _community;
   final AppCubit _app;
   Timer? _debounce;
 
-  ExploreCubit({required this._venues, required this._notifications, required this._app}) : super(const ExploreState());
+  ExploreCubit({required this._venues, required this._notifications, required this._community, required this._app})
+    : super(const ExploreState());
 
   Future<void> load() async {
     final s = _app.state;
@@ -33,6 +36,11 @@ class ExploreCubit extends Cubit<ExploreState> {
       _emit(state.copyWith(venues: data, error: null));
     } catch (e) {
       _emit(state.copyWith(error: e.toString()));
+    }
+    if (s.areaId != null) {
+      try {
+        _emit(state.copyWith(cityGames: await _community.cityGames(s.areaId!)));
+      } catch (_) {}
     }
     if (_app.loggedIn) {
       try {

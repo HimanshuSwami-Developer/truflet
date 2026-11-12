@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../app/router/app_navigation.dart';
+import '../../../app/router/app_routes.dart';
 import '../../../app/session/app_cubit.dart';
 import '../../../app/session/app_state.dart';
 import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../data/repositories/community_repository.dart';
 import '../../../data/repositories/notification_repository.dart';
 import '../../../data/repositories/venue_repository.dart';
 import '../../auth/auth_guard.dart';
@@ -21,9 +23,12 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (c) =>
-        ExploreCubit(venues: c.read<VenueRepository>(), notifications: c.read<NotificationRepository>(), app: c.read<AppCubit>())
-          ..load(),
+    create: (c) => ExploreCubit(
+      venues: c.read<VenueRepository>(),
+      notifications: c.read<NotificationRepository>(),
+      community: c.read<CommunityRepository>(),
+      app: c.read<AppCubit>(),
+    )..load(),
     child: const _ExploreView(),
   );
 }
@@ -239,6 +244,7 @@ class _ExploreView extends StatelessWidget {
             ),
           ),
           if (offer['enabled'] == true) _offer(offer),
+          if (st.cityGames.isNotEmpty) ..._cityBoard(context, st.cityGames, s),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
             child: Row(
@@ -326,6 +332,84 @@ class _ExploreView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// The public board: games in my city that still have open spots.
+  List<Widget> _cityBoard(BuildContext context, List<Json> games, AppState s) {
+    void openBoard() => context.pushOpenGames(OpenGamesArgs(areaId: s.areaId, cityName: s.cityName));
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
+        child: Row(
+          children: [
+            Expanded(child: H2('Open games in ${s.cityName}')),
+            GestureDetector(
+              onTap: openBoard,
+              child: Text(
+                'See all',
+                style: t(13, w: FontWeight.w700, c: C.brand),
+              ),
+            ),
+          ],
+        ),
+      ),
+      SizedBox(
+        height: 128,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: games.length.clamp(0, 8),
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (_, i) {
+            final g = games[i];
+            return Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: openBoard,
+                child: Container(
+                  width: 230,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: C.line),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          SportPill(asMap(g['sport'])),
+                          const Spacer(),
+                          Text(
+                            '${inr(g['share'])}/player',
+                            style: t(12, w: FontWeight.w700, c: C.brand),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('${g['date_label']} · ${g['time_label']}', style: t(14, w: FontWeight.w700)),
+                      Text(
+                        '${g['venue']?['name'] ?? ''}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: t(12, c: C.muted),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${g['spots_left']} spot${g['spots_left'] == 1 ? '' : 's'} left · ${g['joined_count']}/${g['total_players']} in',
+                        style: t(12, w: FontWeight.w600, c: C.green700),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ];
   }
 
   Widget _offer(Json o) => Container(

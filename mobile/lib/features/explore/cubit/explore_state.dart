@@ -12,7 +12,18 @@ class ExploreState {
   final String sort;
   final String q;
 
-  const ExploreState({this.venues, this.error, this.unread = 0, this.sportId, this.sort = 'near', this.q = ''});
+  /// Published games with open spots in my city (the public board).
+  final List<Json> cityGames;
+
+  const ExploreState({
+    this.venues,
+    this.error,
+    this.unread = 0,
+    this.sportId,
+    this.sort = 'near',
+    this.q = '',
+    this.cityGames = const [],
+  });
 
   static const _keep = Object();
 
@@ -23,6 +34,7 @@ class ExploreState {
     Object? sportId = _keep,
     String? sort,
     String? q,
+    List<Json>? cityGames,
   }) => ExploreState(
     venues: identical(venues, _keep) ? this.venues : venues as List<Json>?,
     error: identical(error, _keep) ? this.error : error as String?,
@@ -30,5 +42,6 @@ class ExploreState {
     sportId: identical(sportId, _keep) ? this.sportId : sportId as int?,
     sort: sort ?? this.sort,
     q: q ?? this.q,
+    cityGames: cityGames ?? this.cityGames,
   );
 }

@@ -11,42 +11,13 @@ import '../../../data/repositories/community_repository.dart';
 import '../../auth/auth_guard.dart';
 import '../cubit/groups_cubit.dart';
 
-/// "Book a slot" on a venue: play solo with strangers, or with one of my groups.
-Future<void> choosePlayMode(BuildContext context, {required Json venue, int? sportId}) async {
-  final choice = await sheet<String>(
-    context,
-    (ctx) => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('How do you want to play?', style: d(22)),
-        const SizedBox(height: 6),
-        Text(venue['name'] ?? '', style: t(14, c: C.muted)),
-        const SizedBox(height: 16),
-        _ModeTile(
-          icon: LucideIcons.userPlus,
-          bg: C.limeSoft,
-          fg: C.green700,
-          title: 'Play solo with strangers',
-          subtitle: 'Join an open game here, or start one others can join and split the cost.',
-          onTap: () => Navigator.pop(ctx, 'solo'),
-        ),
-        const SizedBox(height: 10),
-        _ModeTile(
-          icon: LucideIcons.users,
-          bg: C.blueSoft,
-          fg: C.blue,
-          title: 'Play with a group',
-          subtitle: 'Pick one of your groups or create a new one. Members get invited once you book.',
-          onTap: () => Navigator.pop(ctx, 'group'),
-        ),
-      ],
-    ),
-  );
-  if (choice == null || !context.mounted) return;
-  if (choice == 'solo') {
-    await context.pushOpenGames(OpenGamesArgs(venue: venue, sportId: sportId));
-    return;
-  }
+/// Venue › "Solo with strangers": open games here, or start one.
+Future<void> playSolo(BuildContext context, {required Json venue, int? sportId}) =>
+    context.pushOpenGames(OpenGamesArgs(venue: venue, sportId: sportId));
+
+/// Venue › "Select a group": pick or create a group, then pick the slot.
+/// If the group doesn't fill the game, the open spots are published to players in the city.
+Future<void> playWithGroup(BuildContext context, {required Json venue, int? sportId}) async {
   if (!await requireLogin(context) || !context.mounted) return;
   final group = await pickGroup(context);
   if (group == null || !context.mounted) return;
@@ -61,59 +32,6 @@ Future<Json?> pickGroup(BuildContext context) => sheet<Json>(
     child: const _GroupPicker(),
   ),
 );
-
-class _ModeTile extends StatelessWidget {
-  final IconData icon;
-  final Color bg, fg;
-  final String title, subtitle;
-  final VoidCallback onTap;
-  const _ModeTile({
-    required this.icon,
-    required this.bg,
-    required this.fg,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(18),
-      side: const BorderSide(color: C.line),
-    ),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
-              child: Icon(icon, size: 22, color: fg),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: t(15, w: FontWeight.w700)),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: t(12, c: C.muted, h: 1.4)),
-                ],
-              ),
-            ),
-            const Icon(LucideIcons.chevronRight, size: 18, color: C.muted),
-          ],
-        ),
-      ),
-    ),
-  );
-}
 
 class _GroupPicker extends StatefulWidget {
   const _GroupPicker();
@@ -144,7 +62,10 @@ class _GroupPickerState extends State<_GroupPicker> {
     children: [
       Text('Play with a group', style: d(22)),
       const SizedBox(height: 6),
-      Text('Everyone in the group gets a notification once the slot is booked.', style: t(13, c: C.muted, h: 1.4)),
+      Text(
+        'Members get a notification once you book. Spots your group doesn\'t fill can be published to players in your city.',
+        style: t(13, c: C.muted, h: 1.4),
+      ),
       const SizedBox(height: 14),
       DataBuilder<GroupsCubit, List<Json>>(
         skeleton: const ListSkeleton(count: 2, padding: EdgeInsets.zero),

@@ -132,7 +132,9 @@ def open_game_payload(game, me):
         "time_label": f"{fmt_hour(b.start_hour)} – {fmt_hour(b.end_hour)}",
         "host": (b.user.name or "Player").split(" ")[0],
         "total_players": game.total_players,
-        "joined_count": 1 + len(joined),
+        "joined_count": game.reserved_spots + len(joined),
+        "venue": {"id": b.venue_id, "name": b.venue.name, "area": b.venue.area.name},
+        "group": b.group_game.group.name if hasattr(b, "group_game") else None,
         "spots_left": game.spots_left,
         "share": game.share,
         "players": [_person(b.user, me) | {"role": "host"}] + [_person(p.user, me) | {"role": "player"} for p in joined],
@@ -144,7 +146,23 @@ def open_game_payload(game, me):
 @api_view(["GET"])
 def venue_open_games(request, pk):
     venue = get_object_or_404(Venue, pk=pk, is_active=True)
-    return Response([open_game_payload(g, request.user) for g in services.open_games_at(venue)])
+    return Response([open_game_payload(g, request.user) for g in services.open_games_at(venue=venue)])
+
+
+@api_view(["GET"])
+def city_open_games(request):
+    """The public board: every game with open spots in the city of ?area= (or ?city=)."""
+    from venues.models import Area, City
+    city = None
+    if request.GET.get("city"):
+        city = City.objects.filter(pk=request.GET["city"]).first()
+    elif request.GET.get("area"):
+        area = Area.objects.filter(pk=request.GET["area"]).select_related("city").first()
+        city = area.city if area else None
+    if not city:
+        return Response([])
+    games = [g for g in services.open_games_at(city=city) if g.spots_left > 0]
+    return Response([open_game_payload(g, request.user) for g in games])
 
 
 @api_view(["POST"])

@@ -87,19 +87,26 @@ class PrimaryButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(radius),
           onTap: loading ? null : onTap,
-          child: Center(
-            child: loading
-                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        style: t(fontSize, w: FontWeight.w600, c: disabled ? const Color(0xFF57625A) : fg),
-                      ),
-                      if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-                    ],
-                  ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Center(
+              child: loading
+                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: t(fontSize, w: FontWeight.w600, c: disabled ? const Color(0xFF57625A) : fg),
+                          ),
+                        ),
+                        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
