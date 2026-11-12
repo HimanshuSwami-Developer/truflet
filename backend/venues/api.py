@@ -66,7 +66,7 @@ def cities(request):
     for c in City.objects.prefetch_related("areas").all():
         counts = dict(Venue.objects.filter(is_active=True, area__city=c).values_list("area").annotate(n=Count("id")))
         data.append({
-            "id": c.id, "name": c.name, "is_popular": c.is_popular,
+            "id": c.id, "name": c.name, "is_popular": c.is_popular, "is_live": c.is_live,
             "areas": [{"id": a.id, "name": a.name, "pincode": a.pincode, "lat": a.lat, "lng": a.lng,
                        "venue_count": counts.get(a.id, 0)} for a in c.areas.all()],
         })
@@ -75,13 +75,13 @@ def cities(request):
 
 @api_view(["GET"])
 def locate(request):
-    """Nearest area for GPS coordinates."""
+    """Nearest area for GPS coordinates, among cities that are live in the app."""
     try:
         lat, lng = float(request.GET["lat"]), float(request.GET["lng"])
     except (KeyError, ValueError):
         raise ValidationError({"lat": "lat and lng are required"})
     best, best_d = None, None
-    for a in Area.objects.select_related("city").exclude(lat__isnull=True):
+    for a in Area.objects.select_related("city").filter(city__is_live=True).exclude(lat__isnull=True):
         d = (a.lat - lat) ** 2 + (a.lng - lng) ** 2
         if best_d is None or d < best_d:
             best, best_d = a, d

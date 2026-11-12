@@ -46,7 +46,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         if opts["reset"]:
             for m in (Fixture, TournamentTeam, Tournament, RSVP, Game, GroupMember, Group, FriendRequest, Booking,
-                      Coupon, VenuePhoto, VenueSport, Court, Venue, Amenity, Area, City, PlayerSport, Sport,
+                      Coupon, VenuePhoto, VenueSport, Court, Venue, Amenity, PlayerSport, Sport,
                       FAQ, PolicySection, RefundRule):
                 m.objects.all().delete()
             User.objects.filter(is_staff=False).delete()
@@ -85,8 +85,6 @@ class Command(BaseCommand):
                           ("BTM Layout", 12.9166, 77.6101), ("Domlur", 12.9609, 77.6387), ("Ejipura", 12.9406, 77.6278)],
             "Mumbai": [("Andheri West", 19.1364, 72.8296), ("Powai", 19.1176, 72.9060), ("Bandra", 19.0596, 72.8295),
                        ("Thane", 19.2183, 72.9781)],
-            "Delhi NCR": [("Gurugram", 28.4595, 77.0266), ("Noida", 28.5355, 77.3910), ("Dwarka", 28.5921, 77.0460),
-                          ("Saket", 28.5245, 77.2066)],
             "Pune": [("Baner", 18.5590, 73.7868), ("Kothrud", 18.5074, 73.8077), ("Viman Nagar", 18.5679, 73.9143),
                      ("Hinjewadi", 18.5913, 73.7389)],
             "Hyderabad": [("Gachibowli", 17.4401, 78.3489), ("Madhapur", 17.4483, 78.3915),
@@ -95,9 +93,9 @@ class Command(BaseCommand):
                        ("C-Scheme", 26.9050, 75.7998), ("Mansarovar", 26.8505, 75.7628)],
         }
         for ci, (city, areas) in enumerate(data.items()):
-            c = City.objects.create(name=city, order=ci)
+            c, _ = City.objects.get_or_create(name=city, defaults={"order": ci, "is_live": True})
             for ai, (name, lat, lng) in enumerate(areas):
-                Area.objects.create(city=c, name=name, lat=lat, lng=lng, order=ai)
+                Area.objects.get_or_create(city=c, name=name, defaults={"lat": lat, "lng": lng, "order": ai})
 
     def catalog(self):
         sports = [

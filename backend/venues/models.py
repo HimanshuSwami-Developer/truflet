@@ -11,6 +11,9 @@ class City(models.Model):
     name = models.CharField(max_length=60, unique=True)
     order = models.PositiveIntegerField(default=0)
     is_popular = models.BooleanField(default=True)
+    is_live = models.BooleanField(
+        default=False, verbose_name="live",
+        help_text="Players can pick this city in the app. Off = shown as “Coming soon”.")
 
     class Meta:
         ordering = ["order", "name"]

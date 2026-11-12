@@ -3,21 +3,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:turflet/screens/create.dart';
-import 'package:turflet/screens/shell.dart';
-import 'package:turflet/state.dart';
-import 'package:turflet/theme.dart';
+import 'package:turflet/app/app_dependencies.dart';
+import 'package:turflet/app/app_scope.dart';
+import 'package:turflet/core/config/app_config.dart';
+import 'package:turflet/features/play/view/create_screen.dart';
+import 'package:turflet/features/shell/view/main_shell.dart';
+import 'package:turflet/core/theme/theme.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized().framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   testWidgets('offline launch does not crash', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    final state = AppState();
+    final deps = AppDependencies(AppConfig.fromDartDefine());
+    final state = deps.appCubit;
     await state.boot(); // fails quietly: server unreachable
-    expect(state.sports, isEmpty);
+    expect(state.state.sports, isEmpty);
 
     final errors = <String>[];
     final original = FlutterError.onError;
@@ -30,20 +32,28 @@ void main() {
     }
 
     for (final type in ['match', 'tour']) {
-      await tester.pumpWidget(ChangeNotifierProvider.value(
-        value: state,
-        child: MaterialApp(key: UniqueKey(), theme: buildTheme(), home: CreateScreen(type: type)),
-      ));
+      await tester.pumpWidget(
+        AppScope(
+          deps: deps,
+          child: MaterialApp(
+            key: UniqueKey(),
+            theme: buildTheme(),
+            home: CreateScreen(type: type),
+          ),
+        ),
+      );
       await settle();
       expect(find.text('Try again'), findsOneWidget, reason: 'Create($type) should offer a retry');
       await tester.tap(find.text('Try again'));
       await settle();
     }
 
-    await tester.pumpWidget(ChangeNotifierProvider.value(
-      value: state,
-      child: MaterialApp(key: UniqueKey(), theme: buildTheme(), home: const MainShell()),
-    ));
+    await tester.pumpWidget(
+      AppScope(
+        deps: deps,
+        child: MaterialApp(key: UniqueKey(), theme: buildTheme(), home: const MainShell()),
+      ),
+    );
     await settle();
 
     FlutterError.onError = original;

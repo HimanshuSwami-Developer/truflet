@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  bloc:
+    dependency: transitive
+    description:
+      name: bloc
+      sha256: e03b235924e4f509c27b5d6b2f949200e0a91149a9818b4f65eeb56662b75413
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.2.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -182,6 +190,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_bloc:
+    dependency: "direct main"
+    description:
+      name: flutter_bloc
+      sha256: cf51747952201a455a1c840f8171d273be009b932c75093020f9af64f2123e38
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.1.1"
   flutter_cache_manager:
     dependency: transitive
     description:
@@ -287,6 +303,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.5"
+  go_router:
+    dependency: "direct main"
+    description:
+      name: go_router
+      sha256: d4105f50c438c37d0d1372b1fbf1617fe9be398b559fa29d2067756ebbd42b69
+      url: "https://pub.dev"
+    source: hosted
+    version: "18.1.4"
   google_fonts:
     dependency: "direct main"
     description:
@@ -589,7 +613,7 @@ packages:
     source: hosted
     version: "5.0.6"
   provider:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: provider
       sha256: "4e82183fa20e5ca25703ead7e05de9e4cceed1fbd1eadc1ac3cb6f565a09f272"

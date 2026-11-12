@@ -41,11 +41,15 @@ python manage.py runserver 0.0.0.0:8000
 ```bash
 cd mobile
 flutter pub get
-flutter run                                    # Android emulator → http://10.0.2.2:8000, iOS sim → 127.0.0.1
-flutter run --dart-define=API_BASE=https://api.yourdomain.com/api/v1   # real server / physical phone
+flutter run                              # local backend: Android emulator → 10.0.2.2:8000, iOS sim → 127.0.0.1:8000
+flutter run --dart-define=APP_ENV=stage        # stage (STAGE_API_BASE, see below)
+flutter run --dart-define=APP_ENV=prod         # prod  → https://truflet.vercel.app/api/v1
+flutter build apk --dart-define=APP_ENV=prod   # release build against prod
 ```
 
-For a physical phone on the same Wi-Fi, use your computer's LAN IP, e.g. `--dart-define=API_BASE=http://192.168.1.20:8000/api/v1`.
+Environments live in `lib/core/config/app_config.dart`. The stage URL defaults to `https://truflet-stage.vercel.app/api/v1`; change it there or pass `--dart-define=STAGE_API_BASE=...`. `--dart-define=API_BASE=...` overrides the URL for any environment — for a physical phone on the same Wi-Fi use your computer's LAN IP, e.g. `--dart-define=API_BASE=http://192.168.1.20:8000/api/v1`. Local and stage builds print one line per API call (`[api] GET /venues/ → 200 84ms`); prod does not.
+
+See `mobile/README.md` for how the app code is organised.
 
 Demo player after `seed_demo`: email **arjun@turflet.app**, code **123456** (dev mode).
 
