@@ -10,12 +10,9 @@ import '../../features/booking/view/ticket_screen.dart';
 import '../../features/location/view/location_screen.dart';
 import '../../features/notifications/view/notifications_screen.dart';
 import '../../features/onboarding/view/onboarding_screen.dart';
-import '../../features/play/view/create_screen.dart';
-import '../../features/play/view/tournament_screen.dart';
 import '../../features/saved/view/saved_screen.dart';
 import '../../features/shell/view/main_shell.dart';
 import '../../features/splash/view/splash_screen.dart';
-import '../../features/squad/view/group_screen.dart';
 import '../../features/support/view/help_screen.dart';
 import '../../features/support/view/policy_screen.dart';
 import '../../features/venue/view/venue_details_screen.dart';
@@ -39,9 +36,6 @@ GoRouter createRouter() => GoRouter(
     _route(AppRoutes.payment, (s) => PaymentScreen(booking: s.extra! as Json)),
     _route(AppRoutes.bookingConfirmed, (s) => BookingConfirmedScreen(booking: s.extra! as Json)),
     _route(AppRoutes.ticket, (s) => TicketScreen(bookingId: int.parse(s.pathParameters['bookingId']!))),
-    _route(AppRoutes.create, (s) => CreateScreen(type: s.uri.queryParameters['type'] ?? 'tour')),
-    _route(AppRoutes.tournament, (s) => TournamentScreen(id: int.parse(s.pathParameters['tournamentId']!))),
-    _route(AppRoutes.group, (s) => GroupScreen(id: int.parse(s.pathParameters['groupId']!))),
   ],
 );
 

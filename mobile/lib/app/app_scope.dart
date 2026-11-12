@@ -6,8 +6,6 @@ import '../data/repositories/booking_repository.dart';
 import '../data/repositories/config_repository.dart';
 import '../data/repositories/location_repository.dart';
 import '../data/repositories/notification_repository.dart';
-import '../data/repositories/play_repository.dart';
-import '../data/repositories/squad_repository.dart';
 import '../data/repositories/support_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/repositories/venue_repository.dart';
@@ -31,8 +29,6 @@ class AppScope extends StatelessWidget {
       RepositoryProvider<BookingRepository>.value(value: deps.bookings),
       RepositoryProvider<NotificationRepository>.value(value: deps.notifications),
       RepositoryProvider<SupportRepository>.value(value: deps.support),
-      RepositoryProvider<PlayRepository>.value(value: deps.play),
-      RepositoryProvider<SquadRepository>.value(value: deps.squad),
     ],
     child: BlocProvider.value(value: deps.appCubit, child: child),
   );

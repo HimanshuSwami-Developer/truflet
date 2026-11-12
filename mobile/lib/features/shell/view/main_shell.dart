@@ -5,12 +5,10 @@ import '../../../app/session/app_cubit.dart';
 import '../../auth/view/sign_in_prompt.dart';
 import '../../booking/view/my_bookings_screen.dart';
 import '../../explore/view/explore_screen.dart';
-import '../../play/view/play_screen.dart';
 import '../../profile/view/profile_screen.dart';
-import '../../squad/view/squad_screen.dart';
 import '../widgets/bottom_nav.dart';
 
-/// Main tabs: Explore · Bookings · Play · Squad · Profile
+/// Main tabs: Explore · Bookings · Profile (indexes in [AppTab])
 class MainShell extends StatelessWidget {
   const MainShell({super.key});
 
@@ -24,14 +22,6 @@ class MainShell extends StatelessWidget {
       _Gate(
         key: const ValueKey('b'),
         child: MyBookingsScreen(key: ValueKey('bk${s.user?['id']}')),
-      ),
-      _Gate(
-        key: const ValueKey('p'),
-        child: PlayScreen(key: ValueKey('pl${s.user?['id']}')),
-      ),
-      _Gate(
-        key: const ValueKey('s'),
-        child: SquadScreen(key: ValueKey('sq${s.user?['id']}')),
       ),
       _Gate(
         key: const ValueKey('pr'),

@@ -1,6 +1,6 @@
 # Turflet mobile app
 
-Flutter app for players: find turfs, book slots, pay, and organise matches and tournaments.
+Flutter app for players: find turfs, book slots, pay and manage bookings.
 How to run it against local / stage / prod is in the root `README.md`.
 
 ## Code layout
@@ -36,7 +36,7 @@ lib/
 
 Features: splash, onboarding, location, auth (login, profile form, sign-in guards), shell (bottom tabs),
 explore, venue, booking (my bookings, slot picker, payment, confirmation, ticket), saved, notifications,
-support (help, policies), profile, play (hub, create wizard, tournament), squad (squad, group).
+support (help, policies), profile. Tabs: Explore · Bookings · Profile (`AppTab`).
 
 ## Conventions
 

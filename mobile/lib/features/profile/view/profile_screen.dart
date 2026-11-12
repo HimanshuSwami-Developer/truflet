@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/router/app_navigation.dart';
 import '../../../app/session/app_cubit.dart';
@@ -22,7 +23,7 @@ class ProfileScreen extends StatelessWidget {
     create: (c) => ProfileCubit(users: c.read<UserRepository>(), app: c.read<AppCubit>()),
     // refresh the profile whenever the player switches to this tab
     child: BlocListener<AppCubit, AppState>(
-      listenWhen: (prev, cur) => cur.tab == 4 && prev.tab != 4,
+      listenWhen: (prev, cur) => cur.tab == AppTab.profile && prev.tab != AppTab.profile,
       listener: (context, _) => context.read<AppCubit>().refreshMe(),
       child: const _ProfileView(),
     ),
@@ -234,12 +235,7 @@ class _ProfileViewState extends State<_ProfileView> {
                           border: Border(top: BorderSide(color: C.divider)),
                         ),
                         child: Row(
-                          children: [
-                            _stat('${stats['games'] ?? 0}', 'Games'),
-                            _stat('${stats['hours'] ?? 0}h', 'Played'),
-                            _stat('${stats['win_rate'] ?? 0}%', 'Win rate', C.green700),
-                            _stat('${stats['titles'] ?? 0}', 'Titles', C.amber),
-                          ],
+                          children: [_stat('${stats['games'] ?? 0}', 'Games'), _stat('${stats['hours'] ?? 0}h', 'Played')],
                         ),
                       ),
                     ],
@@ -282,12 +278,12 @@ class _ProfileViewState extends State<_ProfileView> {
                       Row(
                         children: [
                           const Expanded(child: H2('My sports', size: 16)),
-                          Text(editing ? 'Tap Change to set level' : 'Shown to teammates', style: t(12, c: C.muted)),
+                          Text(editing ? 'Tap Change to set level' : 'Your sports & levels', style: t(12, c: C.muted)),
                         ],
                       ),
                       const SizedBox(height: 12),
                       for (var i = 0; i < sports.length; i++) _sportRow(sports, i),
-                      if (sports.isEmpty) Text('Add the sports you play so teammates can find you.', style: t(13, c: C.muted)),
+                      if (sports.isEmpty) Text('Add the sports you play.', style: t(13, c: C.muted)),
                       if (editing && sports.length < s.sports.length)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
@@ -309,18 +305,11 @@ class _ProfileViewState extends State<_ProfileView> {
                   child: Column(
                     children: [
                       _switch(
-                        'Show me to nearby players',
-                        'Lets others find you in Squad › Players near you',
-                        u['show_to_nearby'] == true,
-                        () => app.updateMe({'show_to_nearby': !(u['show_to_nearby'] == true)}),
-                        false,
-                      ),
-                      _switch(
-                        'Game & slot notifications',
-                        'RSVPs, invites, tournament updates',
+                        'Booking & slot notifications',
+                        'Reminders, confirmations and offers',
                         u['notifications_on'] == true,
                         () => app.updateMe({'notifications_on': !(u['notifications_on'] == true)}),
-                        true,
+                        false,
                       ),
                     ],
                   ),
@@ -338,14 +327,13 @@ class _ProfileViewState extends State<_ProfileView> {
                         '${s.saved.length} venues',
                         () => context.pushSaved(),
                       ),
-                      _menu(LucideIcons.trophy, C.amber, C.amberSoft, 'My tournaments', 'Hosting & played', () => app.setTab(2)),
                       _menu(
                         LucideIcons.creditCard,
                         C.blue,
                         C.blueSoft,
                         'Payments & refunds',
                         'Wallet ${inr(u['wallet_balance'])}',
-                        () => app.setTab(1),
+                        () => app.setTab(AppTab.bookings),
                       ),
                       _menu(
                         LucideIcons.userPlus,
@@ -353,7 +341,12 @@ class _ProfileViewState extends State<_ProfileView> {
                         C.purpleSoft,
                         'Invite friends',
                         'Code ${u['referral_code']} · ₹${s.config['referral_reward'] ?? 50} each',
-                        () => app.setTab(3),
+                        () => SharePlus.instance.share(
+                          ShareParams(
+                            text:
+                                'Join me on Turflet! Use my code ${u['referral_code']} and we both get ₹${s.config['referral_reward'] ?? 50} off.',
+                          ),
+                        ),
                       ),
                       _menu(
                         LucideIcons.circleHelp,
@@ -383,7 +376,7 @@ class _ProfileViewState extends State<_ProfileView> {
                     border: const Color(0xFFFECACA),
                     onTap: () async {
                       await app.logout();
-                      app.setTab(0);
+                      app.setTab(AppTab.explore);
                     },
                   ),
                 ),

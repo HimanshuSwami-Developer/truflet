@@ -4,19 +4,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../app/router/app_navigation.dart';
 import '../../../core/theme/theme.dart';
 
-/// Shared bottom navigation: Explore · Bookings · Play · Squad · Profile.
+/// Shared bottom navigation: Explore · Bookings · Profile.
 class BottomNav extends StatelessWidget {
   final int current;
   final ValueChanged<int> onTap;
   const BottomNav({super.key, required this.current, required this.onTap});
 
-  static const items = [
-    (LucideIcons.house, 'Explore'),
-    (LucideIcons.calendar, 'Bookings'),
-    (LucideIcons.trophy, 'Play'),
-    (LucideIcons.users, 'Squad'),
-    (LucideIcons.user, 'Profile'),
-  ];
+  static const items = [(LucideIcons.house, 'Explore'), (LucideIcons.calendar, 'Bookings'), (LucideIcons.user, 'Profile')];
 
   @override
   Widget build(BuildContext context) {

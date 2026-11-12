@@ -18,7 +18,7 @@ cp .env.example .env          # fill in DATABASE_URL, CLOUDINARY_URL, SECRET_KEY
 createdb turflet               # or point DATABASE_URL at your Postgres
 python manage.py migrate
 python manage.py createsuperuser        # email + password, used for the admin panel
-python manage.py seed_demo              # optional: sample venues, players, tournaments from the design
+python manage.py seed_demo              # optional: sample venues, players and bookings
 python manage.py runserver 0.0.0.0:8000
 ```
 
@@ -56,7 +56,7 @@ Demo player after `seed_demo`: email **arjun@turflet.app**, code **123456** (dev
 **Sign-in** is passwordless: the player enters their email, receives a 6-digit code (valid 10 minutes, 5 attempts, one resend every 30 seconds), and gets JWT tokens. Players can add an optional mobile number in Profile so venues can contact them. The email template is in `backend/templates/emails/`.
 
 ### Screens (same order as the design)
-1 Splash · 2 Onboarding · 3 Choose location (GPS + cities/areas) · 4 Explore (sport chips, search, sort, offer banner, favourites) · 5 Turf details · 6 Slot booking (sport · date · court · duration · live slot grid with peak/booked/past) · 7 Review & pay (10-min hold countdown, coupon, payment methods) · 8 Booking confirmed (real QR) · 9 My bookings (upcoming/completed/cancelled, rate, book again) · 10 Ticket (QR pass, directions, call, cancel with the refund quote, reschedule) · 11 Saved venues · 12 Help & support (FAQs, chat ticket, call, email) · 13 Policies · 14 Play hub · 15 Create match/tournament (4-step wizard) · 16 Tournament host dashboard (fixtures, ball-by-ball cricket scoring or points scoring, teams & payments) · 17 Squad (groups, friends, requests, players nearby) · 18 Group (RSVP, cost split, invite) · 19 Profile.
+1 Splash · 2 Onboarding · 3 Choose location (GPS + cities/areas) · 4 Explore (sport chips, search, sort, offer banner, favourites) · 5 Turf details · 6 Slot booking (sport · date · court · duration · live slot grid with peak/booked/past) · 7 Review & pay (10-min hold countdown, coupon, payment methods) · 8 Booking confirmed (real QR) · 9 My bookings (upcoming/completed/cancelled, rate, book again) · 10 Ticket (QR pass, directions, call, cancel with the refund quote, reschedule) · 11 Saved venues · 12 Help & support (FAQs, chat ticket, call, email) · 13 Policies · 14 Profile.
 
 Two screens are additions that the design implied but didn't draw, styled with the same tokens: **email code sign-in** and **notifications** (the bell on Explore).
 
@@ -68,7 +68,7 @@ Built with Django templates, Tailwind (CDN) and jQuery: live search and filters,
 - **Check-in desk**: scan or type the QR / booking ID to validate a ticket and check the player in
 - **Venues**: details, sport pricing (base + peak surcharge), courts, photos, blocked slots, and a day-by-day **slot board**
 - **Bookings**: filter by status/payment/venue, detail page, check in, mark completed, cancel with full refund, internal notes
-- **Coupons, reviews, players** (wallet top-ups, bookings history), **squad groups, matches, tournaments** (generate fixtures, edit scores), teams, fixtures
+- **Coupons, reviews, players** (wallet top-ups, bookings history)
 - **Content**: FAQs, refund rules (these drive the real refund calculation), policy sections, support tickets (reply), notifications
 - **Broadcast** a notification to every player, and **App settings** (convenience fee, GST, hold minutes, offer banner, support contacts)
 
@@ -85,4 +85,3 @@ Built with Django templates, Tailwind (CDN) and jQuery: live search and filters,
 - Price = base price per hour, plus the peak surcharge for hours inside the venue's peak window. Then the convenience fee, plus GST on that fee, minus any coupon.
 - Refund % is set by the `RefundRule` table (100% at 24h or more, 50% at 6h or more, otherwise 0%). The convenience fee is not refunded, except when the venue cancels.
 - One free reschedule, allowed up to 2 hours before the slot.
-- Tournaments: knockout, league or groups + knockout with 4/8/16 teams. Fixtures are generated and scheduled across courts and days; winners move on to the next round automatically.

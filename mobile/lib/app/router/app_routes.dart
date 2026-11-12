@@ -16,14 +16,9 @@ abstract final class AppRoutes {
   static const payment = '/payment'; // extra: Json booking (held)
   static const bookingConfirmed = '/booking-confirmed'; // extra: Json booking (paid)
   static const ticket = '/tickets/:bookingId';
-  static const create = '/play/create'; // ?type=match|tour
-  static const tournament = '/tournaments/:tournamentId';
-  static const group = '/groups/:groupId';
 
   static String venueOf(int id) => '/venues/$id';
   static String ticketOf(int bookingId) => '/tickets/$bookingId';
-  static String tournamentOf(int id) => '/tournaments/$id';
-  static String groupOf(int id) => '/groups/$id';
 }
 
 /// Arguments for the slot picker (new booking or reschedule).

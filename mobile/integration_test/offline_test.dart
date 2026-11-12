@@ -1,4 +1,4 @@
-// Regression test: app launched while the backend is unreachable must not crash.
+// Regression test: app launched while the backend is unreachable must not crash (main tabs render).
 //   flutter test integration_test/offline_test.dart -d <device> --dart-define=API_BASE=http://127.0.0.1:8999/api/v1
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:turflet/app/app_dependencies.dart';
 import 'package:turflet/app/app_scope.dart';
 import 'package:turflet/core/config/app_config.dart';
-import 'package:turflet/features/play/view/create_screen.dart';
 import 'package:turflet/features/shell/view/main_shell.dart';
 import 'package:turflet/core/theme/theme.dart';
 
@@ -29,23 +28,6 @@ void main() {
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 250));
       }
-    }
-
-    for (final type in ['match', 'tour']) {
-      await tester.pumpWidget(
-        AppScope(
-          deps: deps,
-          child: MaterialApp(
-            key: UniqueKey(),
-            theme: buildTheme(),
-            home: CreateScreen(type: type),
-          ),
-        ),
-      );
-      await settle();
-      expect(find.text('Try again'), findsOneWidget, reason: 'Create($type) should offer a retry');
-      await tester.tap(find.text('Try again'));
-      await settle();
     }
 
     await tester.pumpWidget(

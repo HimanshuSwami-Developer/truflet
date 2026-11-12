@@ -23,7 +23,7 @@ class MyBookingsScreen extends StatelessWidget {
     create: (c) => MyBookingsCubit(bookings: c.read<BookingRepository>(), venues: c.read<VenueRepository>())..load(),
     // refresh whenever the player switches to this tab
     child: BlocListener<AppCubit, AppState>(
-      listenWhen: (prev, cur) => cur.tab == 1 && prev.tab != 1,
+      listenWhen: (prev, cur) => cur.tab == AppTab.bookings && prev.tab != AppTab.bookings,
       listener: (context, _) => context.read<MyBookingsCubit>().load(),
       child: const _MyBookingsView(),
     ),
@@ -141,7 +141,7 @@ class _MyBookingsView extends StatelessWidget {
                   ),
                   if (tab == 0) ...[
                     const SizedBox(height: 16),
-                    PrimaryButton('Explore turfs', height: 48, onTap: () => app.setTab(0)),
+                    PrimaryButton('Explore turfs', height: 48, onTap: () => app.setTab(AppTab.explore)),
                   ],
                 ],
               ),

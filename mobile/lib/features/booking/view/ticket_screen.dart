@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/app_navigation.dart';
+import '../../../app/session/app_state.dart';
 import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/external_actions.dart';
@@ -86,7 +87,7 @@ class _TicketViewState extends State<_TicketView> {
                     fontSize: 15,
                     onTap: () {
                       Navigator.pop(ctx);
-                      context.goTab(1);
+                      context.goTab(AppTab.bookings);
                     },
                   ),
                 ),

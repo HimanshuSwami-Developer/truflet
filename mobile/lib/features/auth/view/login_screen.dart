@@ -56,7 +56,7 @@ class _LoginViewState extends State<_LoginView> {
     final subs = [
       "We'll email you a 6-digit code. No password needed — your bookings and QR pass stay linked to this email.",
       'We sent a 6-digit code to ${email.text.trim()}. It expires in 10 minutes. Check spam if you don\'t see it.',
-      'Your name appears on bookings and in squads. The venue gets your mobile number so they can reach you.',
+      'Your name appears on your bookings. The venue gets your mobile number so they can reach you.',
     ];
     return Scaffold(
       body: SafeArea(

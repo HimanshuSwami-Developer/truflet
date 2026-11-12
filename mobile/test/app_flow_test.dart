@@ -16,7 +16,9 @@ import 'package:turflet/features/splash/view/splash_screen.dart';
 
 Future<AppDependencies> _boot(Map<String, Object> prefs) async {
   SharedPreferences.setMockInitialValues(prefs);
-  final deps = AppDependencies(const AppConfig(environment: AppEnvironment.local, apiBaseUrl: 'http://127.0.0.1:1/api/v1', logNetwork: false));
+  final deps = AppDependencies(
+    const AppConfig(environment: AppEnvironment.local, apiBaseUrl: 'http://127.0.0.1:1/api/v1', logNetwork: false),
+  );
   await deps.appCubit.boot();
   return deps;
 }

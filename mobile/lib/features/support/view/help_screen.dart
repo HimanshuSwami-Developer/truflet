@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/app_navigation.dart';
+import '../../../app/session/app_state.dart';
 import '../../../app/session/app_cubit.dart';
 import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
@@ -110,7 +111,7 @@ class _HelpViewState extends State<_HelpView> {
     final cfg = context.watch<AppCubit>().state.config;
     final top = MediaQuery.of(context).padding.top;
     return WithNav(
-      current: 4,
+      current: AppTab.profile,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [

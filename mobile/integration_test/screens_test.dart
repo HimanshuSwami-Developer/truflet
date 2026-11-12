@@ -14,6 +14,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:turflet/app/app_dependencies.dart';
 import 'package:turflet/app/app_scope.dart';
+import 'package:turflet/app/session/app_state.dart';
 import 'package:turflet/app/router/app_routes.dart';
 import 'package:turflet/core/config/app_config.dart';
 import 'package:turflet/core/network/json.dart';
@@ -27,12 +28,9 @@ import 'package:turflet/features/booking/view/ticket_screen.dart';
 import 'package:turflet/features/location/view/location_screen.dart';
 import 'package:turflet/features/notifications/view/notifications_screen.dart';
 import 'package:turflet/features/onboarding/view/onboarding_screen.dart';
-import 'package:turflet/features/play/view/create_screen.dart';
-import 'package:turflet/features/play/view/tournament_screen.dart';
 import 'package:turflet/features/saved/view/saved_screen.dart';
 import 'package:turflet/features/shell/view/main_shell.dart';
 import 'package:turflet/features/splash/view/splash_screen.dart';
-import 'package:turflet/features/squad/view/group_screen.dart';
 import 'package:turflet/features/support/view/help_screen.dart';
 import 'package:turflet/features/support/view/policy_screen.dart';
 import 'package:turflet/features/venue/view/venue_details_screen.dart';
@@ -78,9 +76,6 @@ void main() {
     final venue = asMap(await api.get('/venues/${gf['id']}/'));
     final upcoming = asList(asMap(await api.get('/bookings/', {'tab': 'upcoming'}))['items']);
     final ticketId = upcoming.first['id'] as int;
-    final home = asMap(await api.get('/play/home/'));
-    final tourId = asList(home['hosting']).first['id'] as int;
-    final groupId = asList(await api.get('/squad/groups/')).first['id'] as int;
     final day = DateTime.now().add(const Duration(days: 5));
     final ds = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
     final hold = asMap(
@@ -182,30 +177,22 @@ void main() {
       );
       await open('03-location', const LocationScreen(first: true), s);
       await open('03b-login', const LoginScreen(), s);
-      for (var tab = 0; tab < 5; tab++) {
+      for (var tab = 0; tab < 3; tab++) {
         state.setTab(tab);
         await open(
           'tab$tab',
           const MainShell(),
           s,
           then: () async {
-            if (tab == 1) {
+            if (tab == AppTab.bookings) {
               await tapText('Completed', 'tab1b-completed', s);
               await tapText('Cancelled', 'tab1c-cancelled', s);
             }
-            if (tab == 2) {
-              await tapText('Hosting', 'tab2b-hosting', s);
-              await tapText('Past', 'tab2c-past', s);
-            }
-            if (tab == 3) {
-              await tapText('Friends', 'tab3b-friends', s);
-              await tapText('Requests', 'tab3c-requests', s);
-            }
-            if (tab == 4) await tapText('Edit profile', 'tab4b-editing', s);
+            if (tab == AppTab.profile) await tapText('Edit profile', 'tab2b-editing', s);
           },
         );
       }
-      state.setTab(0);
+      state.setTab(AppTab.explore);
       await open('05-details', VenueDetailsScreen(venueId: gf['id']), s);
       await open('06-booking', SlotBookingScreen(args: SlotBookingArgs(venue: venue)), s);
       await open('07-payment', PaymentScreen(booking: hold), s);
@@ -231,41 +218,6 @@ void main() {
       );
       await open('13d-notifications', const NotificationsScreen(), s);
       await open(
-        '15-create-tour',
-        const CreateScreen(type: 'tour'),
-        s,
-        then: () async {
-          await tapText('Continue', '15b-tour-teams', s);
-          await tapText('Continue', '15c-tour-where', s);
-          await tapText('Continue', '15d-tour-review', s);
-        },
-      );
-      await open(
-        '15e-create-match',
-        const CreateScreen(type: 'match'),
-        s,
-        then: () async {
-          await tapText('Continue', '15f-match-players', s);
-          await tapText('Continue', '15g-match-where', s);
-          await tapText('Continue', '15h-match-review', s);
-        },
-      );
-      await open(
-        '16-tournament',
-        TournamentScreen(id: tourId),
-        s,
-        then: () async {
-          await tapText('Update live score', '16b-scoring', s);
-          if (find.text('Undo last ball').evaluate().isEmpty) problems.add('${s.name} · 16b: scoring sheet did not open');
-          await tester.tapAt(const Offset(20, 60));
-          await settle(6);
-          await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
-          await settle(4);
-          await tapText('Teams & payments', '16c-teams', s);
-        },
-      );
-      await open('18-group', GroupScreen(id: groupId), s);
-      await open(
         '19-profile-form',
         Scaffold(
           body: SafeArea(
@@ -281,7 +233,7 @@ void main() {
           await tapText('Save & continue', '19b-profile-form-errors', s);
         },
       );
-      state.setTab(4);
+      state.setTab(AppTab.profile);
       await open(
         '19c-profile-sheet',
         const MainShell(),
@@ -290,7 +242,7 @@ void main() {
           await tapText('Edit', '19d-edit-details-sheet', s);
         },
       );
-      state.setTab(0);
+      state.setTab(AppTab.explore);
     }
 
     FlutterError.onError = original;

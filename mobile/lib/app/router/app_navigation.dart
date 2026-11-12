@@ -6,7 +6,7 @@ import '../../core/network/json.dart';
 import '../session/app_cubit.dart';
 import 'app_routes.dart';
 
-/// Typed navigation used by screens: `context.pushVenue(id)`, `context.goTab(1)`, …
+/// Typed navigation used by screens: `context.pushVenue(id)`, `context.goTab(AppTab.bookings)`, …
 extension AppNavigation on BuildContext {
   // ------------------------------------------------------------ onboarding flow (replaces the stack)
   void goOnboarding() => go(AppRoutes.onboarding, extra: const FadeIn());
@@ -30,14 +30,10 @@ extension AppNavigation on BuildContext {
   Future<bool?> pushSlotBooking(SlotBookingArgs args) => push<bool>(AppRoutes.slotBooking, extra: args);
   Future<void> pushPayment(Json booking) => push(AppRoutes.payment, extra: booking);
   Future<void> pushTicket(int bookingId) => push(AppRoutes.ticketOf(bookingId));
-  Future<void> pushCreate(String type) => push('${AppRoutes.create}?type=$type');
-  Future<void> pushTournament(int id) => push(AppRoutes.tournamentOf(id));
-  Future<void> pushGroup(int id) => push(AppRoutes.groupOf(id));
 
   // ------------------------------------------------------------ replace the current screen
   Future<void> replaceWithBookingConfirmed(Json booking) => _replace(AppRoutes.bookingConfirmed, extra: booking);
   Future<void> replaceWithTicket(int bookingId) => _replace(AppRoutes.ticketOf(bookingId));
-  Future<void> replaceWithTournament(int id) => _replace(AppRoutes.tournamentOf(id));
 
   /// Like Navigator.pushReplacement: the replaced screen's `push` future resolves (with null)
   /// so the screen underneath can refresh. go_router's pushReplacement alone never resolves it.

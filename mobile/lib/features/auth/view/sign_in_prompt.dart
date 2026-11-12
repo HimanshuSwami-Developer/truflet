@@ -27,7 +27,7 @@ class SignInPrompt extends StatelessWidget {
             Text('Sign in to continue', style: d(20)),
             const SizedBox(height: 8),
             Text(
-              'Your bookings, squads and tournaments are linked to your email. We send a one-time code — no password.',
+              'Your bookings are linked to your email. We send a one-time code — no password.',
               textAlign: TextAlign.center,
               style: t(14, c: C.muted, h: 1.5),
             ),

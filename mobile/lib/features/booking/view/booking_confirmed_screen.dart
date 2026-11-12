@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../app/router/app_navigation.dart';
+import '../../../app/session/app_state.dart';
 import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/external_actions.dart';
@@ -231,7 +232,15 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> with Si
                 padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + MediaQuery.of(context).padding.bottom / 2),
                 child: Row(
                   children: [
-                    Expanded(child: GhostButton('Home', height: 56, radius: 18, fontSize: 15, onTap: () => context.goTab(0))),
+                    Expanded(
+                      child: GhostButton(
+                        'Home',
+                        height: 56,
+                        radius: 18,
+                        fontSize: 15,
+                        onTap: () => context.goTab(AppTab.explore),
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(flex: 2, child: PrimaryButton('View full ticket', onTap: () => context.replaceWithTicket(b['id']))),
                   ],
