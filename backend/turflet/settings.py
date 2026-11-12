@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "accounts",
     "venues",
     "bookings",
-    "play",
     "dashboard",
 ]
 

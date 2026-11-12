@@ -18,8 +18,6 @@ from django.utils import timezone
 from accounts.models import PlayerSport, User
 from bookings.models import Booking, Coupon
 from core.models import FAQ, AppConfig, PolicySection, RefundRule
-from play import services as play_services
-from play.models import RSVP, FriendRequest, Fixture, Game, Group, GroupMember, Tournament, TournamentTeam
 from venues.models import Amenity, Area, City, Court, Sport, Venue, VenuePhoto, VenueSport
 
 IMG_DIR = Path(settings.BASE_DIR) / "seed_images"
@@ -45,7 +43,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **opts):
         if opts["reset"]:
-            for m in (Fixture, TournamentTeam, Tournament, RSVP, Game, GroupMember, Group, FriendRequest, Booking,
+            for m in (Booking,
                       Coupon, VenuePhoto, VenueSport, Court, Venue, Amenity, PlayerSport, Sport,
                       FAQ, PolicySection, RefundRule):
                 m.objects.all().delete()
@@ -221,10 +219,6 @@ class Command(BaseCommand):
         for n, sport, lvl in [("Vikram Joshi", "Cricket", 2), ("Sara Thomas", "Pickleball", 0), ("Arif Khan", "Football", 1),
                               ("Kabir Rao", "Cricket", 1), ("Meera Iyer", "Badminton", 1)]:
             PlayerSport.objects.create(user=people[n], sport=S[sport], level=lvl)
-        for n in ["Rohan Kulkarni", "Ananya Menon", "Siddharth Pai", "Neha Verma", "Dev Shetty"]:
-            FriendRequest.objects.create(from_user=people[n], to_user=me, status="accepted")
-        for n in ["Kabir Rao", "Meera Iyer"]:
-            FriendRequest.objects.create(from_user=people[n], to_user=me, status="pending")
         for n in ["Rohan Kulkarni", "Siddharth Pai"]:
             PlayerSport.objects.get_or_create(user=people[n], sport=S["Cricket"], defaults={"level": 1})
 
@@ -245,7 +239,7 @@ class Command(BaseCommand):
             return b
 
         # upcoming bookings for the demo player (shown in "My bookings")
-        b1 = book(me, gf, "Cricket", "Court A", today + timedelta(days=1), 18, 2)
+        book(me, gf, "Cricket", "Court A", today + timedelta(days=1), 18, 2)
         book(me, smash, "Badminton", "Court 2", today + timedelta(days=3), 7, 1)
         book(me, kick, "Football", "Pitch 1", today - timedelta(days=6), 20, 2, status="completed")
         book(me, Venue.objects.get(name="Pitch Perfect Box Cricket"), "Cricket", "Court B", today - timedelta(days=13), 7, 2, status="completed")
@@ -256,79 +250,3 @@ class Command(BaseCommand):
         # someone else's bookings so the slot grid shows "Booked"
         for h in (7, 12, 16, 21):
             book(people["Karan Gill"], gf, "Cricket", "Court A", today + timedelta(days=1), h, 1)
-
-        # squad groups
-        def group(name, sport, members, admin_extra=()):
-            g = Group.objects.create(name=name, sport=S[sport], created_by=me, area=kor)
-            GroupMember.objects.create(group=g, user=me, role="admin")
-            for n, pos in members:
-                GroupMember.objects.create(group=g, user=people[n], role="admin" if n in admin_extra else "member", position=pos)
-            return g
-
-        strikers = group("Sunday Strikers", "Cricket", [("Rohan Kulkarni", "Captain"), ("Aditya Mehra", "Wicket-keeper"),
-                                                         ("Siddharth Pai", "All-rounder"), ("Karan Gill", "Bowler"),
-                                                         ("Vikram Joshi", "Batter"), ("Kabir Rao", ""), ("Imran Shaikh", ""),
-                                                         ("Leela Prasad", ""), ("Varun Nair", ""), ("Ajay Mohan", ""),
-                                                         ("Faiz Ahmed", ""), ("Tanvi Rao", ""), ("Dev Shetty", "")],
-                         admin_extra=("Rohan Kulkarni",))
-        group("Smashers Club", "Badminton", [("Neha Verma", ""), ("Ananya Menon", ""), ("Meera Iyer", ""),
-                                             ("Sara Thomas", ""), ("Arif Khan", "")])
-        group("Office FC", "Football", [("Dev Shetty", ""), ("Arif Khan", ""), ("Varun Nair", ""), ("Ajay Mohan", ""),
-                                        ("Imran Shaikh", ""), ("Faiz Ahmed", ""), ("Tanvi Rao", ""), ("Leela Prasad", ""),
-                                        ("Karan Gill", ""), ("Kabir Rao", "")])
-        game = Game.objects.create(name="Sunday Strikers vs Office XI", sport=S["Cricket"], group=strikers, venue=gf,
-                                   court=b1.court, booking=b1, date=b1.date, start_hour=18, duration=2,
-                                   per_side=8, total_cost=b1.total, created_by=me)
-        responses = {"Rohan Kulkarni": "in", "Aditya Mehra": "in", "Siddharth Pai": "maybe", "Vikram Joshi": "in",
-                     "Imran Shaikh": "in", "Leela Prasad": "in", "Varun Nair": "in", "Ajay Mohan": "in",
-                     "Faiz Ahmed": "maybe", "Tanvi Rao": "in"}
-        RSVP.objects.create(game=game, user=me, response="in")
-        for m in strikers.memberships.exclude(user=me):
-            RSVP.objects.create(game=game, user=m.user, response=responses.get(m.user.name, "pending"))
-        Game.objects.create(name="Strikers vs Box Bashers", sport=S["Cricket"], group=strikers, venue=gf,
-                            date=today - timedelta(days=6), start_hour=18, status="completed",
-                            result="Lost by 12 runs", won=False, created_by=me)
-
-        # hosted live tournament (Koramangala Premier League)
-        t = Tournament.objects.create(name="Koramangala Premier League", sport=S["Cricket"], host=me, format="ko",
-                                      team_count=8, players_per_team=8, entry_fee=2000, prize_pool=7600, venue=gf,
-                                      start_date=today - timedelta(days=1), window="full", status="live", overs=10)
-        teams = [("Sunday Strikers", "Rohan K.", True), ("HSR Hawks", "Ajay M.", True), ("Box Bashers", "Imran S.", True),
-                 ("Night Owls", "Faiz A.", False), ("Kora Kings", "Tanvi R.", True), ("Turf Titans", "Leela P.", True),
-                 ("BTM Blasters", "Varun N.", True), ("Office XI", "Dev S.", False)]
-        for i, (n, capt, paid) in enumerate(teams):
-            TournamentTeam.objects.create(tournament=t, name=n, captain_name=capt, paid=paid, seed=i)
-        play_services.generate_fixtures(t, shuffle=False)
-        qf = list(t.fixtures.filter(round_index=0).order_by("order"))
-        results = [((112, 4, 60), (98, 9, 60), "a"), ((120, 6, 60), (101, 8, 60), "a"),
-                   ((88, 10, 55), (89, 3, 50), "b"), ((134, 5, 60), (110, 7, 60), "a")]
-        for f, (a, b, w) in zip(qf, results):
-            f.state = "live"
-            f.a_runs, f.a_wkts, f.a_balls = a
-            f.b_runs, f.b_wkts, f.b_balls = b
-            f.innings = 2
-            f.save()
-            play_services.confirm_result(f, w)
-        sf1 = t.fixtures.get(label="SF1")
-        # design: Box Bashers batted first 92/6 (10), Strikers chasing 86/3 (8.2)
-        if sf1.team_a.name != "Box Bashers":
-            sf1.team_a, sf1.team_b = sf1.team_b, sf1.team_a
-        sf1.state, sf1.batting_first, sf1.innings = "live", "a", 2
-        sf1.a_runs, sf1.a_wkts, sf1.a_balls = 92, 6, 60
-        sf1.b_runs, sf1.b_wkts, sf1.b_balls = 86, 3, 50
-        sf1.save()
-        Fixture.objects.filter(pk=sf1.next_fixture_id).update(team_a=None, team_b=None)
-
-        # open tournaments near you, hosted by others
-        st = timezone.localdate()
-        for name, sport, venue, days, n, fee, prize, filled, fmt in [
-            ("HSR Night Cricket Cup", "Cricket", gf, 7, 8, 2000, 20000, 6, "ko"),
-            ("Bengaluru 5s League", "Football", kick, 14, 8, 3500, 40000, 7, "league"),
-            ("Indiranagar Doubles Open", "Badminton", smash, 8, 16, 600, 8000, 11, "ko"),
-        ]:
-            ot = Tournament.objects.create(name=name, sport=S[sport], host=people["Rohan Kulkarni"], format=fmt,
-                                           team_count=n, players_per_team=S[sport].team_size, entry_fee=fee,
-                                           prize_pool=prize, venue=venue, start_date=st + timedelta(days=days),
-                                           status="open")
-            for i in range(filled):
-                TournamentTeam.objects.create(tournament=ot, name=f"Team {i + 1}", captain_name="Captain", paid=True)

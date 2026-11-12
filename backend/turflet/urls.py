@@ -8,7 +8,6 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from accounts import api as accounts
 from bookings import api as bookings
 from core import api as core
-from play import api as play
 from venues import api as venues
 
 api = [
@@ -43,28 +42,6 @@ api = [
     path("bookings/<int:pk>/pay/", bookings.pay),
     path("bookings/<int:pk>/cancel/", bookings.cancel),
     path("bookings/<int:pk>/reschedule/", bookings.reschedule),
-    # squad
-    path("squad/groups/", play.groups),
-    path("squad/groups/<int:pk>/", play.group_detail),
-    path("squad/groups/join/<slug:slug>/", play.group_join),
-    path("squad/games/<int:pk>/rsvp/", play.rsvp),
-    path("squad/friends/", play.friends),
-    path("squad/friends/<int:user_id>/add/", play.add_friend),
-    path("squad/requests/", play.friend_requests),
-    path("squad/requests/<int:pk>/<str:action>/", play.friend_request_action),
-    path("squad/nearby/", play.nearby),
-    # play
-    path("play/home/", play.play_home),
-    path("play/plan/", play.plan),
-    path("play/games/", play.create_game),
-    path("play/tournaments/", play.tournaments),
-    path("play/tournaments/<int:pk>/", play.tournament_detail),
-    path("play/tournaments/<int:pk>/register/", play.tournament_register),
-    path("play/tournaments/<int:pk>/teams/", play.tournament_add_team),
-    path("play/tournaments/<int:pk>/teams/<int:team_id>/pay/", play.team_pay),
-    path("play/tournaments/<int:pk>/generate/", play.tournament_generate),
-    path("play/tournaments/<int:pk>/remind/", play.tournament_remind),
-    path("play/fixtures/<int:pk>/<str:action>/", play.fixture_action),
 ]
 
 urlpatterns = [

@@ -15,7 +15,6 @@ from django.db import models
 from accounts.models import User
 from bookings.models import Booking, Coupon
 from core.models import FAQ, Notification, PolicySection, RefundRule, SupportTicket
-from play.models import Fixture, Game, Group, GroupMember, Tournament, TournamentTeam
 from venues.models import Amenity, Area, BlockedSlot, City, Court, Review, Sport, Venue, VenuePhoto, VenueSport
 
 INPUT = ("w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 "
@@ -231,36 +230,6 @@ RESOURCES = [
              detail_url="dashboard:user_detail",
              help="Turn on “Turf owner” to let someone manage their own grounds, then set them as the owner on "
                   "those venues. They sign in at /admin-panel/ with an email code."),
-    Resource("groups", Group, "Squad groups", ["name", "sport", "area", "image", "created_by"],
-             [col("name"), col("sport"), col("area"), col("created_by", "Owner"), col("created_at", "Created", "date")],
-             search=["name"], filters=["sport"], icon="users", section="People"),
-    Resource("members", GroupMember, "Group members", ["group", "user", "role", "position"],
-             [col("group"), col("user"), col("role"), col("position")], filters=["group", "role"], icon="user",
-             section="People"),
-    Resource("games", Game, "Matches",
-             ["name", "sport", "group", "venue", "court", "date", "start_hour", "duration", "per_side", "total_cost",
-              "status", "result", "won", "created_by"],
-             [col("name"), col("sport"), col("venue"), col("date"), col("start_hour", "Start"),
-              col("status", "Status", "badge")], search=["name"], filters=["status", "sport"], icon="zap",
-             section="Play"),
-    Resource("tournaments", Tournament, "Tournaments",
-             ["name", "sport", "host", "format", "team_count", "players_per_team", "entry_fee", "prize_pool", "venue",
-              "start_date", "window", "overs", "status", "cover"],
-             [col("name"), col("sport"), col("venue"), col("start_date", "Starts"), col("team_count", "Teams"),
-              col("entry_fee", "Entry", "money"), col("status", "Status", "badge")],
-             search=["name"], filters=["status", "sport"], icon="award", section="Play",
-             detail_url="dashboard:tournament_detail"),
-    Resource("teams", TournamentTeam, "Tournament teams",
-             ["tournament", "name", "captain", "captain_name", "group_label", "paid", "eliminated"],
-             [col("tournament"), col("name"), col("captain_name", "Captain"), col("paid", "Paid", "bool"),
-              col("eliminated", "Out", "bool")], search=["name"], filters=["tournament", "paid"], icon="flag",
-             section="Play", toggles=["paid"]),
-    Resource("fixtures", Fixture, "Fixtures",
-             ["tournament", "round_name", "label", "team_a", "team_b", "court_label", "scheduled_at", "state",
-              "a_runs", "a_wkts", "a_balls", "b_runs", "b_wkts", "b_balls", "winner", "result_text"],
-             [col("tournament"), col("round_name", "Round"), col("label"), col("name_a", "Team A"),
-              col("name_b", "Team B"), col("state", "State", "badge")],
-             filters=["tournament", "state"], icon="list", section="Play", can_create=False),
     # ------------------------------------------------ content
     Resource("faqs", FAQ, "FAQs", ["question", "answer", "order", "is_active"],
              [col("question"), col("order"), col("is_active", "Active", "bool")], search=["question", "answer"],

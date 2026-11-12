@@ -20,8 +20,6 @@
     <p class="mt-4 text-sm text-brand-muted">Lifetime spend <strong class="text-brand-ink">{{ spent|inr }}</strong></p>
     <h3 class="mt-4 mb-2 font-display font-bold">Sports</h3>
     {% for s in sports %}<p class="text-sm">{{ s.sport }} · {{ s.get_level_display }}</p>{% empty %}<p class="text-sm text-brand-muted">None set.</p>{% endfor %}
-    <h3 class="mt-4 mb-2 font-display font-bold">Groups</h3>
-    {% for g in groups %}<p class="text-sm">{{ g }}</p>{% empty %}<p class="text-sm text-brand-muted">None.</p>{% endfor %}
   </section>
   <section class="card overflow-hidden lg:col-span-2">
     <h2 class="px-5 pt-5 font-display text-lg font-bold">Bookings</h2>

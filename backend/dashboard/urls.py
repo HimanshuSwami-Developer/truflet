@@ -22,8 +22,6 @@ urlpatterns = [
     path("bookings/<int:pk>/<str:action>/", v.booking_action, name="booking_action"),
     path("users/<int:pk>/", v.user_detail, name="user_detail"),
     path("users/<int:pk>/wallet/", v.user_wallet, name="user_wallet"),
-    path("tournaments/<int:pk>/", v.tournament_detail, name="tournament_detail"),
-    path("tournaments/<int:pk>/generate/", v.tournament_generate, name="tournament_generate"),
     # generic CRUD
     path("r/<slug:slug>/", v.crud_list, name="crud_list"),
     path("r/<slug:slug>/new/", v.crud_form, name="crud_create"),

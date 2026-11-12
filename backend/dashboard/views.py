@@ -17,8 +17,6 @@ from accounts.models import EmailOTP, User, normalize_email
 from bookings import services as booking_services
 from bookings.models import Booking
 from core.models import AppConfig, Notification, SupportTicket, notify
-from play import services as play_services
-from play.models import Tournament
 from venues.models import Court, Sport, Venue, VenuePhoto, VenueSport
 
 from .crud import REGISTRY, TailwindFormMixin, sections
@@ -175,7 +173,6 @@ def home(request):
         stats.update({
             "users": User.objects.filter(is_staff=False).count(),
             "new_users": User.objects.filter(date_joined__date__gte=today - timedelta(days=7)).count(),
-            "live_tournaments": Tournament.objects.filter(status="live").count(),
         })
     return render(request, "dashboard/home.html", ctx(
         request, stats=stats, days=days, top_venues=top_venues,
@@ -434,7 +431,7 @@ def user_detail(request, pk):
     return render(request, "dashboard/user_detail.html", ctx(
         request, u=u, bookings=u.bookings.select_related("venue").order_by("-created_at")[:20],
         spent=u.bookings.filter(payment_status="paid").aggregate(s=Sum("total"))["s"] or 0,
-        groups=u.squad_groups.all(), sports=u.sports.select_related("sport")))
+        sports=u.sports.select_related("sport")))
 
 
 @admin_required
@@ -450,31 +447,6 @@ def user_wallet(request, pk):
     if delta:
         notify(u, "Wallet updated", f"₹{abs(delta)} {'added to' if delta > 0 else 'removed from'} your Turflet balance")
     return JsonResponse({"ok": True, "balance": u.wallet_balance})
-
-
-# ------------------------------------------------------------------ tournaments
-
-@admin_required
-def tournament_detail(request, pk):
-    t = get_object_or_404(Tournament.objects.select_related("sport", "venue", "host"), pk=pk)
-    rounds = {}
-    for f in t.fixtures.select_related("team_a", "team_b", "winner"):
-        rounds.setdefault(f"{f.round_name}{' · Group ' + f.group_label if f.group_label else ''}", []).append(f)
-    return render(request, "dashboard/tournament_detail.html", ctx(
-        request, t=t, rounds=rounds, teams=t.teams.all(), standings=play_services.standings(t)))
-
-
-@admin_required
-@require_POST
-def tournament_generate(request, pk):
-    t = get_object_or_404(Tournament, pk=pk)
-    try:
-        play_services.generate_fixtures(t)
-        messages.success(request, "Fixtures generated and scheduled.")
-    except Exception as e:
-        detail = getattr(e, "detail", None)
-        messages.error(request, str(list(detail.values())[0][0]) if isinstance(detail, dict) else str(e))
-    return redirect("dashboard:tournament_detail", pk=pk)
 
 
 # ------------------------------------------------------------------ settings & broadcast

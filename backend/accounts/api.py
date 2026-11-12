@@ -28,16 +28,8 @@ def sport_payload(request, ps):
 
 def user_stats(user):
     from bookings.models import Booking
-    from play.models import Fixture, Game
     done = Booking.objects.filter(user=user, status="completed")
-    games = done.count() + Game.objects.filter(rsvps__user=user, rsvps__response="in", status="completed").count()
-    hours = done.aggregate(h=Sum("duration"))["h"] or 0
-    decided = Game.objects.filter(rsvps__user=user, rsvps__response="in", won__isnull=False)
-    wins = decided.filter(won=True).count()
-    win_rate = round(wins * 100 / decided.count()) if decided.exists() else 0
-    titles = Fixture.objects.filter(stage="ko", next_fixture__isnull=True, state="done",
-                                    winner__captain=user).count()
-    return {"games": games, "hours": hours, "win_rate": win_rate, "titles": titles}
+    return {"games": done.count(), "hours": done.aggregate(h=Sum("duration"))["h"] or 0}
 
 
 def me_payload(request, user):
