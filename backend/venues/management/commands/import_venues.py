@@ -77,13 +77,15 @@ class Command(BaseCommand):
             if new_area:
                 self.stdout.write(f"  + area {area.name}")
 
-            phones = [p.strip() for p in r["phone"].split("/")]
+            phone_raw = r["phone"].strip()
             email = r["email"].strip()
             notes = [r["notes"].strip()]
-            if len(phones) > 1:
-                notes.append("Other phones: " + ", ".join(phones[1:]))
-            if not first_phone(r["phone"]) and r["phone"].strip():
-                notes.append(f"Phone: {r['phone'].strip()}")
+            if first_phone(phone_raw):
+                extra = [p.strip() for p in phone_raw.split("/")[1:] if first_phone(p)]
+                if extra:
+                    notes.append("Other phones: " + ", ".join(extra))
+            elif phone_raw:
+                notes.append(f"Phone: {phone_raw}")  # e.g. Walk-in / Google Business
             if "@" not in email:
                 notes.append(f"Email: {email}")
                 email = ""
