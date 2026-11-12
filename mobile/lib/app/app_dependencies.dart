@@ -4,6 +4,7 @@ import '../core/storage/app_preferences.dart';
 import '../core/storage/token_storage.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
+import '../data/repositories/community_repository.dart';
 import '../data/repositories/config_repository.dart';
 import '../data/repositories/location_repository.dart';
 import '../data/repositories/notification_repository.dart';
@@ -27,6 +28,7 @@ class AppDependencies {
   final BookingRepository bookings;
   final NotificationRepository notifications;
   final SupportRepository support;
+  final CommunityRepository community;
 
   late final AppCubit appCubit = AppCubit(tokens: tokens, prefs: preferences, configRepository: appConfig, userRepository: users);
 
@@ -38,7 +40,8 @@ class AppDependencies {
       venues = VenueRepository(api),
       bookings = BookingRepository(api),
       notifications = NotificationRepository(api),
-      support = SupportRepository(api);
+      support = SupportRepository(api),
+      community = CommunityRepository(api);
 
   factory AppDependencies(AppConfig config) {
     final tokens = TokenStorage();

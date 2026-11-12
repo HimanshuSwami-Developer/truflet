@@ -16,19 +16,40 @@ abstract final class AppRoutes {
   static const payment = '/payment'; // extra: Json booking (held)
   static const bookingConfirmed = '/booking-confirmed'; // extra: Json booking (paid)
   static const ticket = '/tickets/:bookingId';
+  static const openGames = '/open-games'; // extra: OpenGamesArgs
+  static const group = '/groups/:groupId';
 
   static String venueOf(int id) => '/venues/$id';
   static String ticketOf(int bookingId) => '/tickets/$bookingId';
+  static String groupOf(int id) => '/groups/$id';
 }
 
 /// Arguments for the slot picker (new booking or reschedule).
+/// [group] = play with that group (members get notified); [openGame] = strangers can join.
 class SlotBookingArgs {
   final Json venue;
   final int? initialSportId;
   final Json? reschedule;
   final DateTime? initialDate;
   final int? initialStart;
-  const SlotBookingArgs({required this.venue, this.initialSportId, this.reschedule, this.initialDate, this.initialStart});
+  final Json? group;
+  final bool openGame;
+  const SlotBookingArgs({
+    required this.venue,
+    this.initialSportId,
+    this.reschedule,
+    this.initialDate,
+    this.initialStart,
+    this.group,
+    this.openGame = false,
+  });
+}
+
+/// Arguments for a venue's open games list.
+class OpenGamesArgs {
+  final Json venue;
+  final int? sportId;
+  const OpenGamesArgs({required this.venue, this.sportId});
 }
 
 /// Pass as `extra` to open a route with the splash cross-fade instead of the platform slide.

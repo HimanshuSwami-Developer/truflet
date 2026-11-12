@@ -10,6 +10,8 @@ import '../cubit/notifications_cubit.dart';
 
 const _kind = {
   'booking': (LucideIcons.calendar, C.mint, C.green700),
+  'group': (LucideIcons.users, C.blueSoft, C.blue),
+  'game': (LucideIcons.userPlus, C.limeSoft, C.green700),
   'squad': (LucideIcons.users, C.blueSoft, C.blue),
   'tournament': (LucideIcons.trophy, C.amberSoft, C.amber),
   'offer': (LucideIcons.tag, C.limeSoft, C.green700),

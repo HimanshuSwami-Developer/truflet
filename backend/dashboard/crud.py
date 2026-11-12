@@ -14,6 +14,7 @@ from django.db import models
 
 from accounts.models import User
 from bookings.models import Booking, Coupon
+from community.models import GroupMembership, OpenGame, OpenGamePlayer, PlayerGroup
 from core.models import FAQ, Notification, PolicySection, RefundRule, SupportTicket
 from venues.models import Amenity, Area, BlockedSlot, City, Court, Review, Sport, Venue, VenuePhoto, VenueSport
 
@@ -230,6 +231,21 @@ RESOURCES = [
              detail_url="dashboard:user_detail",
              help="Turn on “Turf owner” to let someone manage their own grounds, then set them as the owner on "
                   "those venues. They sign in at /admin-panel/ with an email code."),
+    # ------------------------------------------------ playing together
+    Resource("player-groups", PlayerGroup, "Groups", ["name", "created_by", "invite_code"],
+             [col("name"), col("created_by", "Created by"), col("invite_code", "Code"), col("created_at", "Created", "date")],
+             search=["name", "invite_code"], icon="users", section="Play together"),
+    Resource("group-members", GroupMembership, "Group members", ["group", "user", "role"],
+             [col("group"), col("user"), col("role", "Role", "badge")], filters=["group", "role"], icon="user",
+             section="Play together"),
+    Resource("open-games", OpenGame, "Open games", ["total_players"],
+             [col("booking"), col("booking__venue", "Venue"), col("booking__date", "Date"),
+              col("total_players", "Players"), col("created_at", "Opened", "date")],
+             search=["booking__code", "booking__venue__name"], icon="user-plus", section="Play together",
+             can_create=False, can_delete=False, select_related=["booking__venue"]),
+    Resource("open-game-players", OpenGamePlayer, "Open game players", ["status"],
+             [col("game"), col("user"), col("amount", "Paid", "money"), col("status", "Status", "badge")],
+             filters=["status"], icon="ticket", section="Play together", can_create=False, can_delete=False),
     # ------------------------------------------------ content
     Resource("faqs", FAQ, "FAQs", ["question", "answer", "order", "is_active"],
              [col("question"), col("order"), col("is_active", "Active", "bool")], search=["question", "answer"],

@@ -174,6 +174,8 @@ def on_cancelled(booking):
             p.save(update_fields=["status", "updated_at"])
             User.objects.filter(pk=booking.user_id, wallet_balance__gte=p.amount).update(
                 wallet_balance=F("wallet_balance") - p.amount)
+            if p.payment_method == "wallet":
+                User.objects.filter(pk=p.user_id).update(wallet_balance=F("wallet_balance") + p.amount)
             notify(p.user, "Open game cancelled",
                    f"{booking.venue.name} · {_when(booking)} · ₹{p.amount} refunded", "game")
     gg = getattr(booking, "group_game", None)

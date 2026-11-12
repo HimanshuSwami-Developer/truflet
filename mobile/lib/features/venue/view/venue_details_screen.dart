@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../app/router/app_navigation.dart';
-import '../../../app/router/app_routes.dart';
 import '../../../app/session/app_cubit.dart';
 import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
@@ -13,6 +11,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../data/repositories/venue_repository.dart';
 import '../../auth/auth_guard.dart';
+import '../../community/widgets/play_mode_sheet.dart';
 import '../cubit/venue_details_cubit.dart';
 
 const amenityIcons = {
@@ -363,9 +362,7 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
                     child: PrimaryButton(
                       'Book a slot',
                       trailing: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18),
-                      onTap: cur == null
-                          ? null
-                          : () => context.pushSlotBooking(SlotBookingArgs(venue: v, initialSportId: cur['sport_id'])),
+                      onTap: cur == null ? null : () => choosePlayMode(context, venue: v, sportId: cur['sport_id']),
                     ),
                   ),
                 ),

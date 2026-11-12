@@ -10,6 +10,13 @@ class SlotBookingState {
   final List<Json> slots;
   final bool loading, busy;
 
+  /// Playing with this group (members are notified once paid).
+  final Json? group;
+
+  /// Open to strangers; [openPlayers] = total players including the host.
+  final bool openGame;
+  final int openPlayers;
+
   const SlotBookingState({
     required this.venue,
     required this.reschedule,
@@ -22,7 +29,13 @@ class SlotBookingState {
     this.slots = const [],
     this.loading = true,
     this.busy = false,
+    this.group,
+    this.openGame = false,
+    this.openPlayers = 10,
   });
+
+  /// Most players the selected sport allows on a court.
+  int get maxPlayers => ((sports.isEmpty ? null : sport['max_players']) as int?) ?? 16;
 
   bool get isReschedule => reschedule != null;
   List<Json> get sports => asList(venue['venue_sports']);
@@ -68,6 +81,7 @@ class SlotBookingState {
     List<Json>? slots,
     bool? loading,
     bool? busy,
+    int? openPlayers,
   }) => SlotBookingState(
     venue: venue,
     reschedule: reschedule,
@@ -80,5 +94,8 @@ class SlotBookingState {
     slots: slots ?? this.slots,
     loading: loading ?? this.loading,
     busy: busy ?? this.busy,
+    group: group,
+    openGame: openGame,
+    openPlayers: openPlayers ?? this.openPlayers,
   );
 }

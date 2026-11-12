@@ -73,6 +73,9 @@ class OpenGame(TimeStamped):
     booking = models.OneToOneField("bookings.Booking", on_delete=models.CASCADE, related_name="open_game")
     total_players = models.PositiveSmallIntegerField(help_text="Including the host")
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self):
         return f"Open game · {self.booking}"
 

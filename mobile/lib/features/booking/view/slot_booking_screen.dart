@@ -129,6 +129,15 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          if (st.group != null || st.openGame)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Pill(
+                                st.group != null ? 'With ${st.group!['name']}' : 'Open game · strangers can join',
+                                bg: st.group != null ? C.blueSoft : C.limeSoft,
+                                fg: st.group != null ? C.blue : C.green700,
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -268,6 +277,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                         ),
                       ),
                     ],
+                    if (st.openGame) _openPlayers(st),
                     Container(
                       margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                       padding: const EdgeInsets.all(16),
@@ -408,6 +418,62 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Open game: how many players in total (including you). Each stranger pays total ÷ players.
+  Widget _openPlayers(SlotBookingState st) {
+    final n = st.openPlayers;
+    Widget btn(String label, bool primary, VoidCallback onTap, String semantics) => Semantics(
+      button: true,
+      label: semantics,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: primary ? C.brand : C.ground,
+            borderRadius: BorderRadius.circular(12),
+            border: primary ? null : Border.all(color: C.line),
+          ),
+          child: Text(
+            label,
+            style: t(20, w: FontWeight.w700, c: primary ? Colors.white : C.ink),
+          ),
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: C.line),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Total players', style: t(13, w: FontWeight.w600)),
+                  Text('Including you · up to ${st.maxPlayers}', style: t(12, c: C.muted)),
+                ],
+              ),
+            ),
+            btn('−', false, () => _cubit.setOpenPlayers(n - 1), 'Fewer players'),
+            SizedBox(
+              width: 48,
+              child: Text('$n', textAlign: TextAlign.center, style: d(20)),
+            ),
+            btn('+', true, () => _cubit.setOpenPlayers(n + 1), 'More players'),
+          ],
+        ),
       ),
     );
   }

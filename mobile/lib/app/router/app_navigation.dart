@@ -30,6 +30,10 @@ extension AppNavigation on BuildContext {
   Future<bool?> pushSlotBooking(SlotBookingArgs args) => push<bool>(AppRoutes.slotBooking, extra: args);
   Future<void> pushPayment(Json booking) => push(AppRoutes.payment, extra: booking);
   Future<void> pushTicket(int bookingId) => push(AppRoutes.ticketOf(bookingId));
+  Future<void> pushOpenGames(OpenGamesArgs args) => push(AppRoutes.openGames, extra: args);
+
+  /// Resolves to true when the player left the group.
+  Future<bool?> pushGroup(int id) => push<bool>(AppRoutes.groupOf(id));
 
   // ------------------------------------------------------------ replace the current screen
   Future<void> replaceWithBookingConfirmed(Json booking) => _replace(AppRoutes.bookingConfirmed, extra: booking);

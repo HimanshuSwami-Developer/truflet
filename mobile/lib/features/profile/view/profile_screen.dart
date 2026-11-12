@@ -12,6 +12,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../data/repositories/user_repository.dart';
 import '../../auth/view/profile_form.dart';
+import '../../community/widgets/my_groups_card.dart';
 import '../cubit/profile_cubit.dart';
 
 /// 19 · My profile
@@ -299,6 +300,7 @@ class _ProfileViewState extends State<_ProfileView> {
                     ],
                   ),
                 ),
+                const MyGroupsCard(),
                 CardBox(
                   margin: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

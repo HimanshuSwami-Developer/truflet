@@ -13,6 +13,7 @@ import '../../../core/utils/external_actions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../../data/repositories/community_repository.dart';
 import '../cubit/ticket_cubit.dart';
 import '../open_slot_booking.dart';
 
@@ -23,7 +24,9 @@ class TicketScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (c) => TicketCubit(bookingId: bookingId, repository: c.read<BookingRepository>())..load(),
+    create: (c) =>
+        TicketCubit(bookingId: bookingId, repository: c.read<BookingRepository>(), community: c.read<CommunityRepository>())
+          ..load(),
     child: const _TicketView(),
   );
 }
@@ -411,7 +414,8 @@ class _TicketViewState extends State<_TicketView> {
             ],
           ),
         ),
-        if (confirmed)
+        ..._social(b, confirmed),
+        if (confirmed && b['role'] != 'player')
           Container(
             margin: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             padding: const EdgeInsets.all(16),
@@ -492,6 +496,101 @@ class _TicketViewState extends State<_TicketView> {
         ),
       ],
     );
+  }
+
+  Future<void> _leaveGame(Json b) async {
+    final ok = await sheet<bool>(
+      context,
+      (ctx) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Leave this game?', style: d(22)),
+          const SizedBox(height: 8),
+          Text(
+            'Your share of ${inr(b['my_paid'])} is refunded. You can leave up to 6 hours before the game.',
+            style: t(14, c: C.muted, h: 1.5),
+          ),
+          const SizedBox(height: 16),
+          PrimaryButton('Leave game', height: 52, color: C.orange, shadow: false, onTap: () => Navigator.pop(ctx, true)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await _cubit.leaveGame(b['open_game']['id']);
+      if (!mounted) return;
+      toast(context, 'You left the game. Refund on its way.');
+      context.goTab(AppTab.bookings);
+    } catch (e) {
+      if (mounted) toast(context, e.toString());
+    }
+  }
+
+  /// Who's playing: the group, or the open game's players (and "Leave game" for players).
+  List<Widget> _social(Json b, bool confirmed) {
+    final og = b['open_game'], group = b['group'];
+    if (og == null && group == null) return const [];
+    final player = b['role'] == 'player';
+    return [
+      CardBox(
+        margin: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (group != null) ...[
+              const H2('Playing with', size: 16),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(LucideIcons.users, size: 18, color: C.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('${group['name']} · ${group['member_count']} members', style: t(14, w: FontWeight.w600)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Everyone in the group was notified about this game.', style: t(12, c: C.muted)),
+            ] else ...[
+              Row(
+                children: [
+                  const Expanded(child: H2('Open game', size: 16)),
+                  Pill('${og['joined_count']}/${og['total_players']} in', bg: C.limeSoft, fg: C.green700),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                player
+                    ? 'You paid your share of ${inr(b['my_paid'])}. The host booked the slot.'
+                    : 'Strangers can join and pay ${inr(og['share'])} each — added to your Turflet balance. '
+                          '${og['spots_left']} spot${og['spots_left'] == 1 ? '' : 's'} left.',
+                style: t(13, c: C.muted, h: 1.5),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final (i, name) in (og['players'] as List).cast<String>().indexed)
+                    Pill(i == 0 ? '$name · host' : name, bg: C.chip, fg: C.mutedInk),
+                ],
+              ),
+              if (player && confirmed) ...[
+                const SizedBox(height: 12),
+                GhostButton(
+                  'Leave game',
+                  height: 46,
+                  radius: 14,
+                  fg: C.orangeInk,
+                  border: const Color(0xFFFED7AA),
+                  onTap: () => _leaveGame(b),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    ];
   }
 
   Widget _pair(Widget a, Widget b) => Padding(
