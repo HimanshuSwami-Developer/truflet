@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts import api as accounts
 from bookings import api as bookings
+from community import api as community
 from core import api as core
 from venues import api as venues
 
@@ -42,6 +43,16 @@ api = [
     path("bookings/<int:pk>/pay/", bookings.pay),
     path("bookings/<int:pk>/cancel/", bookings.cancel),
     path("bookings/<int:pk>/reschedule/", bookings.reschedule),
+    # groups & open games
+    path("groups/", community.groups),
+    path("groups/join/", community.group_join),
+    path("groups/<int:pk>/", community.group_detail),
+    path("groups/<int:pk>/members/", community.group_add_member),
+    path("groups/<int:pk>/members/<int:user_id>/remove/", community.group_remove_member),
+    path("groups/<int:pk>/leave/", community.group_leave),
+    path("venues/<int:pk>/open-games/", community.venue_open_games),
+    path("open-games/<int:pk>/join/", community.open_game_join),
+    path("open-games/<int:pk>/leave/", community.open_game_leave),
 ]
 
 urlpatterns = [

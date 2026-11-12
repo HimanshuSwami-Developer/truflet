@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "core",
     "accounts",
     "venues",
+    "community",
     "bookings",
     "dashboard",
 ]

@@ -1,5 +1,8 @@
 from datetime import date as date_cls, timedelta
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import permissions
@@ -40,6 +43,35 @@ def countdown(b):
     if h >= 48:
         return f"In {h // 24} days"
     return f"Starts in {h} hrs {m} min" if h else f"Starts in {m} min"
+
+
+def _related(b, name):
+    try:
+        return getattr(b, name)
+    except ObjectDoesNotExist:
+        return None
+
+
+def social_payload(request, b):
+    """Who this booking is played with, and the viewer's part in it."""
+    me = request.user
+    og, gg = _related(b, "open_game"), _related(b, "group_game")
+    role, my_paid = "host", b.total
+    data = {"open_game": None, "group": None}
+    if og:
+        joined = list(og.active_players().select_related("user"))
+        mine = next((p for p in joined if p.user_id == me.id), None)
+        if b.user_id != me.id:
+            role, my_paid = "player", mine.amount if mine else og.share
+        data["open_game"] = {
+            "id": og.id, "total_players": og.total_players, "joined_count": 1 + len(joined),
+            "spots_left": og.spots_left, "share": og.share,
+            "players": [b.user.name or "Host"] + [p.user.name or "Player" for p in joined],
+        }
+    if gg:
+        data["group"] = {"id": gg.group_id, "name": gg.group.name, "member_count": gg.group.memberships.count()}
+    data.update({"role": role, "my_paid": my_paid})
+    return data
 
 
 def booking_payload(request, b):
@@ -102,6 +134,7 @@ def booking_payload(request, b):
         "masked_phone": b.user.masked_phone,
         "masked_email": b.user.masked_email,
         "qr_payload": f"TURFLET|{b.code}|{b.venue_id}|{b.court_id}|{b.date.isoformat()}|{b.start_hour}|{b.duration}|{b.payment_status}",
+        **social_payload(request, b),
     }
 
 
@@ -118,12 +151,17 @@ def bookings(request):
             raise ValidationError({"date": "date, start_hour and duration are required."})
         if day < timezone.localdate():
             raise ValidationError({"date": "Pick today or a future date."})
-        b = services.create_hold(request.user, venue, d.get("court"), d.get("sport"), day, start, duration)
+        from community.services import attach_to_hold
+        with transaction.atomic():
+            b = services.create_hold(request.user, venue, d.get("court"), d.get("sport"), day, start, duration)
+            # optional: play with a group, or open the game to strangers
+            attach_to_hold(b, request.user, group_id=d.get("group"), open_players=d.get("open_players"))
         return Response(booking_payload(request, b), status=201)
 
-    Booking.sync_statuses(Booking.objects.filter(user=request.user))
-    qs = (Booking.objects.filter(user=request.user)
-          .select_related("venue__area__city", "court", "sport", "coupon"))
+    mine = Q(user=request.user) | Q(open_game__players__user=request.user, open_game__players__status="joined")
+    Booking.sync_statuses(Booking.objects.filter(mine).distinct())
+    qs = (Booking.objects.filter(mine).distinct()
+          .select_related("venue__area__city", "court", "sport", "coupon", "user"))
     tab = request.GET.get("tab", "upcoming")
     counts = {
         "upcoming": qs.filter(status="confirmed").count(),
@@ -147,7 +185,10 @@ def _mine(request, pk):
 @api_view(["GET"])
 @permission_classes([Auth])
 def booking_detail(request, pk):
-    b = _mine(request, pk)
+    # the host, or a player who joined the open game, can view the ticket
+    viewer = Q(user=request.user) | Q(open_game__players__user=request.user, open_game__players__status="joined")
+    b = get_object_or_404(Booking.objects.filter(viewer).distinct()
+                          .select_related("venue__area__city", "court", "sport", "user"), pk=pk)
     Booking.sync_statuses(Booking.objects.filter(pk=b.pk))
     b.refresh_from_db()
     return Response(booking_payload(request, b))

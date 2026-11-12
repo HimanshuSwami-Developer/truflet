@@ -140,7 +140,7 @@ class SupportTicket(TimeStamped):
 
 class Notification(TimeStamped):
     KIND = [
-        ("booking", "Booking"), ("squad", "Squad"), ("tournament", "Tournament"),
+        ("booking", "Booking"), ("group", "Group"), ("game", "Open game"), ("squad", "Squad"), ("tournament", "Tournament"),
         ("offer", "Offer"), ("system", "System"),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")

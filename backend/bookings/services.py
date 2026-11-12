@@ -179,6 +179,8 @@ def pay(booking, method, upi_id=""):
     booking.save()
     notify(booking.user, "Booking confirmed",
            f"{booking.venue.name} · {booking.date:%a, %-d %b} · {fmt_hour(booking.start_hour)}", "booking")
+    from community.services import on_paid
+    on_paid(booking)
     return booking
 
 
@@ -220,6 +222,8 @@ def cancel(booking, reason="", by_venue=False):
     booking.save()
     notify(booking.user, "Booking cancelled",
            f"{booking.code} · refund ₹{refund}" if refund else f"{booking.code} cancelled", "booking")
+    from community.services import on_cancelled
+    on_cancelled(booking)
     return booking
 
 

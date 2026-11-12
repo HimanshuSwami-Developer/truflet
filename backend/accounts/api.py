@@ -102,6 +102,8 @@ def otp_verify(request):
     user, created = User.objects.get_or_create(email=email)
     if not user.is_active:
         raise ValidationError({"email": "This account is disabled. Contact support."})
+    from community.services import claim_invites
+    claim_invites(user)  # groups they were invited to by email before signing up
     ref = (request.data.get("referral_code") or "").strip().upper()
     if created and ref:
         user.referred_by = User.objects.filter(referral_code=ref).first()
