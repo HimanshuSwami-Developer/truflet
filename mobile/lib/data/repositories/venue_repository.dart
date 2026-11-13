@@ -6,8 +6,12 @@ class VenueRepository {
   final ApiClient _api;
   VenueRepository(this._api);
 
-  /// [query] keys: area, sport, q, lat, lng, sort.
-  Future<List<Json>> search(Map<String, dynamic> query) async => asList(await _api.get('/venues/', query));
+  /// [query] keys: area, sport, q, lat, lng, sort, amenities, price_min, price_max, date, from_hour, to_hour.
+  /// Returns `{items, radius_km, radius_label, notice}` — the radius widens 3 → 5 → 10 km → city-wide.
+  Future<Json> search(Map<String, dynamic> query) async => asMap(await _api.get('/venues/', query));
+
+  /// Amenity catalogue for the filter sheet: `[{name, icon}]`.
+  Future<List<Json>> amenities() async => asList(await _api.get('/amenities/'));
 
   Future<Json> details(int venueId) async => asMap(await _api.get('/venues/$venueId/'));
 

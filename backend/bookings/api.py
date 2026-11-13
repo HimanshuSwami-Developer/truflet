@@ -1,7 +1,6 @@
 from datetime import date as date_cls, timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -53,23 +52,21 @@ def _related(b, name):
 
 
 def social_payload(request, b):
-    """Who this booking is played with, and the viewer's part in it."""
+    """The match this booking belongs to, and the viewer's part in it."""
     me = request.user
-    og, gg = _related(b, "open_game"), _related(b, "group_game")
+    lobby = _related(b, "lobby")
     role, my_paid = "host", b.total
-    data = {"open_game": None, "group": None}
-    if og:
-        joined = list(og.active_players().select_related("user"))
-        mine = next((p for p in joined if p.user_id == me.id), None)
+    data = {"lobby": None}
+    if lobby:
+        mine = lobby.members.filter(user=me).first()
         if b.user_id != me.id:
-            role, my_paid = "player", mine.amount if mine else og.share
-        data["open_game"] = {
-            "id": og.id, "total_players": og.total_players, "joined_count": og.reserved_spots + len(joined),
-            "spots_left": og.spots_left, "share": og.share,
-            "players": [b.user.name or "Host"] + [p.user.name or "Player" for p in joined],
+            role, my_paid = "player", mine.amount_paid if mine else 0
+        active = lobby.active_members()
+        data["lobby"] = {
+            "id": lobby.id, "status": lobby.status, "capacity": lobby.capacity, "taken": active.count(),
+            "paid_count": active.filter(status="confirmed").count(), "payment_rule": lobby.payment_rule,
+            "is_public": lobby.is_public,
         }
-    if gg:
-        data["group"] = {"id": gg.group_id, "name": gg.group.name, "member_count": gg.group.memberships.count()}
     data.update({"role": role, "my_paid": my_paid})
     return data
 
@@ -133,6 +130,7 @@ def booking_payload(request, b):
         "hours_left": round(b.hours_left, 1),
         "masked_phone": b.user.masked_phone,
         "masked_email": b.user.masked_email,
+        "checkin_pin": b.checkin_pin,
         "qr_payload": f"TURFLET|{b.code}|{b.venue_id}|{b.court_id}|{b.date.isoformat()}|{b.start_hour}|{b.duration}|{b.payment_status}",
         **social_payload(request, b),
     }
@@ -151,14 +149,10 @@ def bookings(request):
             raise ValidationError({"date": "date, start_hour and duration are required."})
         if day < timezone.localdate():
             raise ValidationError({"date": "Pick today or a future date."})
-        from community.services import attach_to_hold
-        with transaction.atomic():
-            b = services.create_hold(request.user, venue, d.get("court"), d.get("sport"), day, start, duration)
-            # optional: play with a group, or open the game to strangers
-            attach_to_hold(b, request.user, group_id=d.get("group"), open_players=d.get("open_players"))
+        b = services.create_hold(request.user, venue, d.get("court"), d.get("sport"), day, start, duration)
         return Response(booking_payload(request, b), status=201)
 
-    mine = Q(user=request.user) | Q(open_game__players__user=request.user, open_game__players__status="joined")
+    mine = Q(user=request.user) | Q(lobby__members__user=request.user, lobby__members__status="confirmed")
     Booking.sync_statuses(Booking.objects.filter(mine).distinct())
     qs = (Booking.objects.filter(mine).distinct()
           .select_related("venue__area__city", "court", "sport", "coupon", "user"))
@@ -186,7 +180,7 @@ def _mine(request, pk):
 @permission_classes([Auth])
 def booking_detail(request, pk):
     # the host, or a player who joined the open game, can view the ticket
-    viewer = Q(user=request.user) | Q(open_game__players__user=request.user, open_game__players__status="joined")
+    viewer = Q(user=request.user) | Q(lobby__members__user=request.user, lobby__members__status="confirmed")
     b = get_object_or_404(Booking.objects.filter(viewer).distinct()
                           .select_related("venue__area__city", "court", "sport", "user"), pk=pk)
     Booking.sync_statuses(Booking.objects.filter(pk=b.pk))

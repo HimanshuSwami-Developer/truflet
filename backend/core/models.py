@@ -20,6 +20,7 @@ class AppConfig(models.Model):
     reschedule_cutoff_hours = models.PositiveIntegerField(default=2)
     max_reschedules = models.PositiveIntegerField(default=1)
     referral_reward = models.PositiveIntegerField(default=50)
+    split_fee = models.PositiveIntegerField(default=15, help_text="₹ platform fee on each split payment in a match")
 
     offer_enabled = models.BooleanField(default=True)
     offer_tag = models.CharField(max_length=40, default="WEEKEND OFFER")
@@ -140,8 +141,7 @@ class SupportTicket(TimeStamped):
 
 class Notification(TimeStamped):
     KIND = [
-        ("booking", "Booking"), ("group", "Group"), ("game", "Open game"), ("squad", "Squad"), ("tournament", "Tournament"),
-        ("offer", "Offer"), ("system", "System"),
+        ("booking", "Booking"), ("match", "Match"), ("offer", "Offer"), ("system", "System"),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     kind = models.CharField(max_length=20, choices=KIND, default="system")

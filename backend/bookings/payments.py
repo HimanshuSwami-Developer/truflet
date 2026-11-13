@@ -32,6 +32,10 @@ class MockProvider:
     def refund(self, booking, amount):
         return True
 
+    def refund_amount(self, amount, transaction_id):
+        """Refunds part of a split payment (a player's share)."""
+        return True
+
 
 PROVIDERS = {"mock": MockProvider}
 

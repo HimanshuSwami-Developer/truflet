@@ -158,7 +158,7 @@ def pay(booking, method, upi_id=""):
         booking.status = "expired"
         booking.save(update_fields=["status"])
         raise ValidationError({"booking": "Your slot hold expired. Please pick the slot again."})
-    if method not in dict(Booking.METHODS):
+    if method not in dict(Booking.METHODS) or method == "pool":
         raise ValidationError({"method": "Unknown payment method."})
     if method == "wallet" and booking.user.wallet_balance < booking.total:
         raise ValidationError({"method": "Not enough Turflet balance."})
@@ -179,8 +179,8 @@ def pay(booking, method, upi_id=""):
     booking.save()
     notify(booking.user, "Booking confirmed",
            f"{booking.venue.name} · {booking.date:%a, %-d %b} · {fmt_hour(booking.start_hour)}", "booking")
-    from community.services import on_paid
-    on_paid(booking)
+    from community.services import on_booking_paid
+    on_booking_paid(booking)
     return booking
 
 
@@ -206,7 +206,8 @@ def cancel(booking, reason="", by_venue=False):
         booking.status = "expired"
         booking.save(update_fields=["status"])
         return booking
-    if by_venue:
+    pool = booking.payment_method == "pool"  # paid by a crowdfunded lobby: each player is refunded in full
+    if by_venue or pool:
         refund = booking.total
     else:
         refund = cancel_quote(booking)["refund"]
@@ -216,14 +217,15 @@ def cancel(booking, reason="", by_venue=False):
     booking.cancel_reason = reason
     booking.refund_amount = refund
     if refund > 0:
-        get_provider().refund(booking, refund)
+        if not pool:
+            get_provider().refund(booking, refund)
         booking.payment_status = "refunded"
         booking.refunded_at = timezone.now()
     booking.save()
     notify(booking.user, "Booking cancelled",
            f"{booking.code} · refund ₹{refund}" if refund else f"{booking.code} cancelled", "booking")
-    from community.services import on_cancelled
-    on_cancelled(booking)
+    from community.services import on_booking_cancelled
+    on_booking_cancelled(booking, by_venue)
     return booking
 
 
@@ -232,6 +234,8 @@ def reschedule(booking, date, start, court_id=None):
     cfg = AppConfig.get()
     if booking.status != "confirmed":
         raise ValidationError({"booking": "Only confirmed bookings can be rescheduled."})
+    if hasattr(booking, "lobby"):
+        raise ValidationError({"booking": "This slot belongs to a match — the squad was told this time, so it can't be moved."})
     if booking.reschedule_count >= cfg.max_reschedules:
         raise ValidationError({"booking": "You have already used your free reschedule."})
     if booking.hours_left < cfg.reschedule_cutoff_hours:

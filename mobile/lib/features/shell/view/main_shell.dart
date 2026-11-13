@@ -5,10 +5,11 @@ import '../../../app/session/app_cubit.dart';
 import '../../auth/view/sign_in_prompt.dart';
 import '../../booking/view/my_bookings_screen.dart';
 import '../../explore/view/explore_screen.dart';
+import '../../lobby/view/my_matches_screen.dart';
 import '../../profile/view/profile_screen.dart';
 import '../widgets/bottom_nav.dart';
 
-/// Main tabs: Explore · Bookings · Profile (indexes in [AppTab])
+/// Main tabs: Explore · Matches · Bookings · Profile (indexes in [AppTab])
 class MainShell extends StatelessWidget {
   const MainShell({super.key});
 
@@ -19,6 +20,10 @@ class MainShell extends StatelessWidget {
     // Keyed by player id so each tab starts fresh after signing in as someone else.
     final pages = [
       const ExploreScreen(),
+      _Gate(
+        key: const ValueKey('m'),
+        child: MyMatchesScreen(key: ValueKey('mt${s.user?['id']}')),
+      ),
       _Gate(
         key: const ValueKey('b'),
         child: MyBookingsScreen(key: ValueKey('bk${s.user?['id']}')),

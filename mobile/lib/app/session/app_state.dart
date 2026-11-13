@@ -3,8 +3,9 @@ import '../../core/network/json.dart';
 /// Bottom-nav tabs, in order.
 abstract final class AppTab {
   static const explore = 0;
-  static const bookings = 1;
-  static const profile = 2;
+  static const matches = 1;
+  static const bookings = 2;
+  static const profile = 3;
 }
 
 /// App-wide state shared by every screen: the signed-in player, server config, sport catalogue,

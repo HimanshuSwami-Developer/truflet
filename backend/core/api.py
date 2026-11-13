@@ -56,6 +56,7 @@ def app_config(request):
         "free_cancel_hours": c.free_cancel_hours,
         "reschedule_cutoff_hours": c.reschedule_cutoff_hours,
         "referral_reward": c.referral_reward,
+        "split_fee": c.split_fee,
         "live_venues": Venue.objects.filter(is_active=True).count(),
         "offer": {
             "enabled": c.offer_enabled, "tag": c.offer_tag, "title": c.offer_title,

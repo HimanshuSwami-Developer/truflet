@@ -7,8 +7,10 @@ import '../../features/booking/view/booking_confirmed_screen.dart';
 import '../../features/booking/view/payment_screen.dart';
 import '../../features/booking/view/slot_booking_screen.dart';
 import '../../features/booking/view/ticket_screen.dart';
-import '../../features/community/view/group_screen.dart';
-import '../../features/community/view/open_games_screen.dart';
+import '../../features/lobby/view/lobbies_screen.dart';
+import '../../features/lobby/view/match_room_screen.dart';
+import '../../features/lobby/view/request_thread_screen.dart';
+import '../../features/lobby/view/squad_builder_screen.dart';
 import '../../features/location/view/location_screen.dart';
 import '../../features/notifications/view/notifications_screen.dart';
 import '../../features/onboarding/view/onboarding_screen.dart';
@@ -37,8 +39,16 @@ GoRouter createRouter() => GoRouter(
     _route(AppRoutes.slotBooking, (s) => SlotBookingScreen(args: s.extra! as SlotBookingArgs)),
     _route(AppRoutes.payment, (s) => PaymentScreen(booking: s.extra! as Json)),
     _route(AppRoutes.bookingConfirmed, (s) => BookingConfirmedScreen(booking: s.extra! as Json)),
-    _route(AppRoutes.openGames, (s) => OpenGamesScreen(args: s.extra! as OpenGamesArgs)),
-    _route(AppRoutes.group, (s) => GroupScreen(id: int.parse(s.pathParameters['groupId']!))),
+    _route(AppRoutes.lobbies, (s) => LobbiesScreen(args: s.extra! as LobbiesArgs)),
+    _route(AppRoutes.squad, (s) => SquadBuilderScreen(args: s.extra! as SquadArgs)),
+    _route(AppRoutes.match, (s) => MatchRoomScreen(lobbyId: int.parse(s.pathParameters['lobbyId']!))),
+    _route(
+      AppRoutes.requestThread,
+      (s) => RequestThreadScreen(
+        lobbyId: int.parse(s.pathParameters['lobbyId']!),
+        requestId: int.parse(s.pathParameters['requestId']!),
+      ),
+    ),
     _route(AppRoutes.ticket, (s) => TicketScreen(bookingId: int.parse(s.pathParameters['bookingId']!))),
   ],
 );

@@ -380,6 +380,8 @@ def booking_action(request, pk, action):
                 raise ValueError("Only confirmed bookings can be checked in.")
             b.checked_in_at = timezone.now()
             b.save(update_fields=["checked_in_at"])
+            from community.services import on_venue_checkin
+            on_venue_checkin(b)  # releases a match's escrowed shares to the host
             msg = "Checked in."
         elif action == "cancel":
             booking_services.cancel(b, request.POST.get("reason", "Cancelled by venue"), by_venue=True)
@@ -415,8 +417,11 @@ def checkin(request):
     if code:
         if code.startswith(("TURFLET|", "TURFLY|")):  # TURFLY| = tickets issued before the rename
             code = code.split("|")[1]
-        booking = (my_bookings(request.user).select_related("user", "venue", "court", "sport")
-                   .filter(code__iexact=code).first())
+        mine = my_bookings(request.user).select_related("user", "venue", "court", "sport")
+        if code.isdigit() and len(code) == 4:  # 4-digit check-in PIN: today's bookings only
+            booking = mine.filter(checkin_pin=code, date=timezone.localdate(), status="confirmed").first()
+        else:
+            booking = mine.filter(code__iexact=code).first()
         if not booking:
             messages.error(request, f"No booking found for {code}.")
     return render(request, "dashboard/checkin.html", ctx(request, code=code, b=booking,

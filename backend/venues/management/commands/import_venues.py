@@ -20,10 +20,10 @@ from django.db import transaction
 from venues.models import Area, City, Court, Sport, Venue, VenueSport
 
 SPORT_DEFAULTS = {
-    # name: (fg, bg, seed image, match minutes, team size, scoring, max players)
-    "Cricket": ("#15803D", "#DCFCE7", "cricket", 60, 8, "cricket", 16),
-    "Football": ("#1D4ED8", "#DBEAFE", "ball", 50, 7, "points", 14),
-    "Pickleball": ("#854D0E", "#FEF3C7", "pickleball", 30, 2, "points", 4),
+    # name: (fg, bg, seed image, max players)
+    "Cricket": ("#15803D", "#DCFCE7", "cricket", 16),
+    "Football": ("#1D4ED8", "#DBEAFE", "ball", 14),
+    "Pickleball": ("#854D0E", "#FEF3C7", "pickleball", 4),
 }
 SPORT_META = {"Cricket": "Box cricket", "Football": "5/7-a-side", "Pickleball": "Doubles court"}
 
@@ -45,9 +45,8 @@ class Command(BaseCommand):
         s = Sport.objects.filter(name__iexact=name).first()
         if s:
             return s
-        fg, bg, image, mins, size, scoring, _ = SPORT_DEFAULTS[name]
-        s = Sport(name=name, fg_color=fg, bg_color=bg, match_minutes=mins, team_size=size, scoring=scoring,
-                  order=Sport.objects.count())
+        fg, bg, image, _ = SPORT_DEFAULTS[name]
+        s = Sport(name=name, fg_color=fg, bg_color=bg, order=Sport.objects.count())
         try:  # reuse the bundled demo artwork when available
             from core.management.commands.seed_demo import img
             img(s.image, image)
@@ -111,7 +110,7 @@ class Command(BaseCommand):
                 VenueSport.objects.update_or_create(
                     venue=v, sport=s,
                     defaults={"base_price": low, "peak_surcharge": max(0, high - low), "meta": SPORT_META.get(s.name, ""),
-                              "max_players": SPORT_DEFAULTS.get(s.name, (0,) * 7)[6] or 16})
+                              "max_players": SPORT_DEFAULTS.get(s.name, (0,) * 4)[3] or 16})
             if not v.courts.exists():
                 court = Court.objects.create(venue=v, name="Turf 1", meta=" / ".join(s.name for s in sports))
                 court.sports.set(sports)

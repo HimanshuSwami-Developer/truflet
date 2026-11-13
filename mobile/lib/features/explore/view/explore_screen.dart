@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../app/router/app_navigation.dart';
@@ -10,14 +11,14 @@ import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
-import '../../../data/repositories/community_repository.dart';
+import '../../../data/repositories/lobby_repository.dart';
 import '../../../data/repositories/notification_repository.dart';
 import '../../../data/repositories/venue_repository.dart';
 import '../../auth/auth_guard.dart';
 import '../cubit/explore_cubit.dart';
 import '../cubit/explore_state.dart';
 
-/// 4 · Turf listing + filters
+/// 1 · Home / Discovery
 class ExploreScreen extends StatelessWidget {
   const ExploreScreen({super.key});
 
@@ -26,7 +27,7 @@ class ExploreScreen extends StatelessWidget {
     create: (c) => ExploreCubit(
       venues: c.read<VenueRepository>(),
       notifications: c.read<NotificationRepository>(),
-      community: c.read<CommunityRepository>(),
+      lobbies: c.read<LobbyRepository>(),
       app: c.read<AppCubit>(),
     )..load(),
     child: const _ExploreView(),
@@ -45,15 +46,37 @@ class _ExploreView extends StatelessWidget {
 
   void _filters(BuildContext context) {
     final cubit = context.read<ExploreCubit>();
+    var f = cubit.state.filters;
     sheet(
       context,
       (ctx) => StatefulBuilder(
         builder: (ctx, set) {
           final sort = cubit.state.sort;
+          final amenities = cubit.state.amenities;
+          final lo = (f.priceMin ?? priceFloor).toDouble(), hi = (f.priceMax ?? priceCeiling).toDouble();
+          void update(ExploreFilters next) => set(() => f = next);
+          Widget chip(String label, bool on, VoidCallback onTap) => Choice(
+            selected: on,
+            height: 40,
+            radius: 12,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            onTap: onTap,
+            child: Text(label, style: t(13, w: FontWeight.w600, c: on ? Colors.white : C.ink)),
+          );
+          final today = DateTime.now();
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Sort & filter', style: d(22)),
+              Row(
+                children: [
+                  Expanded(child: Text('Sort & filter', style: d(22))),
+                  if (f.count > 0)
+                    GestureDetector(
+                      onTap: () => update(const ExploreFilters()),
+                      child: Text('Clear all', style: t(13, w: FontWeight.w700, c: C.brand)),
+                    ),
+                ],
+              ),
               const SizedBox(height: 14),
               Text('Sort by', style: t(13, w: FontWeight.w600)),
               const SizedBox(height: 8),
@@ -77,11 +100,91 @@ class _ExploreView extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+              Text('Free slot on', style: t(13, w: FontWeight.w600)),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (var i = 0; i < 7; i++) ...[
+                      chip(
+                        i == 0 ? 'Today' : i == 1 ? 'Tomorrow' : DateFormat('EEE d').format(today.add(Duration(days: i))),
+                        f.dayOffset == i,
+                        () => update(f.copyWith(dayOffset: f.dayOffset == i ? null : i)),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final (i, w) in timeWindows.indexed)
+                    chip(
+                      '${w.$1} · ${fmtHour(w.$2)}–${fmtHour(w.$3)}',
+                      f.window == i,
+                      () => update(f.copyWith(window: f.window == i ? null : i)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(child: Text('Price per hour', style: t(13, w: FontWeight.w600))),
+                  Text(
+                    '${inr(lo)} – ${hi >= priceCeiling ? '${inr(priceCeiling)}+' : inr(hi)}',
+                    style: t(13, w: FontWeight.w700, c: C.brand),
+                  ),
+                ],
+              ),
+              RangeSlider(
+                values: RangeValues(lo, hi),
+                min: priceFloor.toDouble(),
+                max: priceCeiling.toDouble(),
+                divisions: 30,
+                activeColor: C.brand,
+                inactiveColor: C.segment,
+                onChanged: (v) => update(
+                  f.copyWith(
+                    priceMin: v.start <= priceFloor ? null : v.start.round(),
+                    priceMax: v.end >= priceCeiling ? null : v.end.round(),
+                  ),
+                ),
+              ),
+              if (amenities.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text('Amenities', style: t(13, w: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final a in amenities)
+                      chip(
+                        a['name'],
+                        f.amenities.contains(a['icon']),
+                        () => update(
+                          f.copyWith(
+                            amenities: f.amenities.contains(a['icon'])
+                                ? ({...f.amenities}..remove(a['icon']))
+                                : {...f.amenities, a['icon'] as String},
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 22),
               PrimaryButton(
                 'Show results',
                 onTap: () {
                   Navigator.pop(ctx);
+                  cubit.setFilters(f);
                   cubit.load();
                 },
               ),
@@ -224,7 +327,24 @@ class _ExploreView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: shadowBrandSm,
                       ),
-                      child: const Icon(LucideIcons.slidersHorizontal, color: Colors.white, size: 20),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Icon(LucideIcons.slidersHorizontal, color: Colors.white, size: 20),
+                          if (st.filters.count > 0)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                width: 16,
+                                height: 16,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(color: C.lime, shape: BoxShape.circle),
+                                child: Text('${st.filters.count}', style: t(10, w: FontWeight.w700)),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -244,12 +364,29 @@ class _ExploreView extends StatelessWidget {
             ),
           ),
           if (offer['enabled'] == true) _offer(offer),
-          if (st.cityGames.isNotEmpty) ..._cityBoard(context, st.cityGames, s),
+          if (st.cityLobbies.isNotEmpty) ..._cityBoard(context, st.cityLobbies, s),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
             child: Row(
               children: [
-                Expanded(child: H2(venues == null ? 'Venues near you' : '${venues.length} venues near you')),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      H2(venues == null ? 'Arenas near you' : '${venues.length} arena${venues.length == 1 ? '' : 's'} near you'),
+                      if (st.radiusLabel.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(LucideIcons.radar, size: 13, color: C.green700),
+                            const SizedBox(width: 4),
+                            Text(st.radiusLabel, style: t(12, w: FontWeight.w600, c: C.green700)),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
                 GestureDetector(
                   onTap: cubit.cycleSort,
                   child: Container(
@@ -272,13 +409,40 @@ class _ExploreView extends StatelessWidget {
               ],
             ),
           ),
+          if (st.notice.isNotEmpty && venues != null)
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(color: C.blueSoft, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.locateFixed, size: 16, color: C.blue),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(st.notice, style: t(13, c: C.blueInk))),
+                ],
+              ),
+            ),
+          if (st.filters.count > 0 && venues != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Row(
+                children: [
+                  Text('${st.filters.count} filter${st.filters.count == 1 ? '' : 's'} on', style: t(13, c: C.muted)),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: cubit.clearFilters,
+                    child: Text('Clear', style: t(13, w: FontWeight.w700, c: C.brand)),
+                  ),
+                ],
+              ),
+            ),
           if (error != null) ErrorRetry(error, onRetry: cubit.load),
           if (venues == null && error == null) const VenueCardsSkeleton(),
           if (venues != null && venues.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),
               child: Text(
-                'No venues match. Try another sport or area.',
+                'No arenas match. Try another sport, time or fewer filters.',
                 textAlign: TextAlign.center,
                 style: t(14, c: C.muted),
               ),
@@ -334,34 +498,32 @@ class _ExploreView extends StatelessWidget {
     );
   }
 
-  /// The public board: games in my city that still have open spots.
-  List<Widget> _cityBoard(BuildContext context, List<Json> games, AppState s) {
-    void openBoard() => context.pushOpenGames(OpenGamesArgs(areaId: s.areaId, cityName: s.cityName));
+  /// The city board: public lobbies with open spots.
+  List<Widget> _cityBoard(BuildContext context, List<Json> lobbies, AppState s) {
+    void openBoard() => context.pushLobbies(LobbiesArgs(areaId: s.areaId, cityName: s.cityName));
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
         child: Row(
           children: [
-            Expanded(child: H2('Open games in ${s.cityName}')),
+            Expanded(child: H2('Open lobbies in ${s.cityName}')),
             GestureDetector(
               onTap: openBoard,
-              child: Text(
-                'See all',
-                style: t(13, w: FontWeight.w700, c: C.brand),
-              ),
+              child: Text('See all', style: t(13, w: FontWeight.w700, c: C.brand)),
             ),
           ],
         ),
       ),
       SizedBox(
-        height: 128,
+        height: 132,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: games.length.clamp(0, 8),
+          itemCount: lobbies.length.clamp(0, 8),
           separatorBuilder: (_, _) => const SizedBox(width: 10),
           itemBuilder: (_, i) {
-            final g = games[i];
+            final g = lobbies[i];
+            final locked = g['slot_state'] == 'turf_locked';
             return Material(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
@@ -369,21 +531,25 @@ class _ExploreView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 onTap: openBoard,
                 child: Container(
-                  width: 230,
+                  width: 236,
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: C.line),
-                  ),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: C.line)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           SportPill(asMap(g['sport'])),
+                          const SizedBox(width: 6),
+                          Pill(
+                            locked ? 'Turf locked' : 'Crowdfunding',
+                            bg: locked ? C.mint : C.amberSoft,
+                            fg: locked ? C.green700 : C.amber,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          ),
                           const Spacer(),
                           Text(
-                            '${inr(g['share'])}/player',
+                            (g['per_head'] ?? 0) > 0 ? inr(g['per_head']) : 'Free',
                             style: t(12, w: FontWeight.w700, c: C.brand),
                           ),
                         ],
@@ -398,7 +564,7 @@ class _ExploreView extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        '${g['spots_left']} spot${g['spots_left'] == 1 ? '' : 's'} left · ${g['joined_count']}/${g['total_players']} in',
+                        '${g['spots_left']} spot${g['spots_left'] == 1 ? '' : 's'} left · ${g['taken']}/${g['capacity']} in',
                         style: t(12, w: FontWeight.w600, c: C.green700),
                       ),
                     ],
@@ -477,12 +643,24 @@ class _ExploreView extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (v['is_fast_filling'] == true)
-                          const Positioned(
-                            left: 12,
-                            top: 12,
-                            child: Pill('Fast filling', bg: C.lime, fg: C.ink),
+                        Positioned(
+                          left: 12,
+                          top: 12,
+                          child: Row(
+                            children: [
+                              if (v['is_fast_filling'] == true) ...[
+                                const Pill('Fast filling', bg: C.lime, fg: C.ink),
+                                const SizedBox(width: 6),
+                              ],
+                              if ((v['open_lobbies'] ?? 0) > 0)
+                                Pill(
+                                  '${v['open_lobbies']} open ${v['open_lobbies'] == 1 ? 'lobby' : 'lobbies'}',
+                                  bg: Colors.white,
+                                  fg: C.green700,
+                                ),
+                            ],
                           ),
+                        ),
                         if (km != null)
                           Positioned(
                             left: 12,

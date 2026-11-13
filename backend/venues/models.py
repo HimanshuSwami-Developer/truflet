@@ -40,15 +40,11 @@ class Area(models.Model):
 
 
 class Sport(models.Model):
-    SCORING = [("cricket", "Cricket (runs / wickets / overs)"), ("points", "Points / goals")]
     name = models.CharField(max_length=40, unique=True)
     slug = models.SlugField(max_length=40, unique=True, blank=True)
     fg_color = models.CharField(max_length=7, default="#15803D", help_text="Text colour, e.g. #15803D")
     bg_color = models.CharField(max_length=7, default="#DCFCE7", help_text="Chip background, e.g. #DCFCE7")
     image = models.ImageField(upload_to="sports/", blank=True)
-    match_minutes = models.PositiveIntegerField(default=60, help_text="Typical tournament match length")
-    team_size = models.PositiveIntegerField(default=8)
-    scoring = models.CharField(max_length=10, choices=SCORING, default="points")
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -66,7 +62,8 @@ class Sport(models.Model):
 
 class Amenity(models.Model):
     ICONS = [
-        ("parking", "Parking"), ("floodlights", "Floodlights"), ("washroom", "Washroom"),
+        ("parking", "Parking"), ("floodlights", "Floodlights"), ("covered", "Covered / indoor roof"),
+        ("washroom", "Washroom"),
         ("water", "Drinking water"), ("changing", "Changing room"), ("equipment", "Equipment"),
         ("wifi", "Wi-Fi"), ("cafe", "Cafe"), ("first_aid", "First aid"), ("seating", "Seating"),
     ]

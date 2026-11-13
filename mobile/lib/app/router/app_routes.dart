@@ -16,46 +16,72 @@ abstract final class AppRoutes {
   static const payment = '/payment'; // extra: Json booking (held)
   static const bookingConfirmed = '/booking-confirmed'; // extra: Json booking (paid)
   static const ticket = '/tickets/:bookingId';
-  static const openGames = '/open-games'; // extra: OpenGamesArgs
-  static const group = '/groups/:groupId';
+  static const lobbies = '/lobbies'; // extra: LobbiesArgs
+  static const squad = '/squad'; // extra: SquadArgs
+  static const match = '/matches/:lobbyId';
+  static const requestThread = '/matches/:lobbyId/requests/:requestId';
 
   static String venueOf(int id) => '/venues/$id';
   static String ticketOf(int bookingId) => '/tickets/$bookingId';
-  static String groupOf(int id) => '/groups/$id';
+  static String matchOf(int lobbyId) => '/matches/$lobbyId';
+  static String requestOf(int lobbyId, int requestId) => '/matches/$lobbyId/requests/$requestId';
 }
 
-/// Arguments for the slot picker (new booking or reschedule).
-/// [group] = play with that group (members get notified); [openGame] = strangers can join.
+/// Arguments for the Venue & Slot Matrix (new match or reschedule).
 class SlotBookingArgs {
   final Json venue;
   final int? initialSportId;
   final Json? reschedule;
   final DateTime? initialDate;
   final int? initialStart;
-  final Json? group;
-  final bool openGame;
-  const SlotBookingArgs({
-    required this.venue,
-    this.initialSportId,
-    this.reschedule,
-    this.initialDate,
-    this.initialStart,
-    this.group,
-    this.openGame = false,
-  });
+  const SlotBookingArgs({required this.venue, this.initialSportId, this.reschedule, this.initialDate, this.initialStart});
 }
 
-/// Arguments for the open games list: one venue's games, or every published game in a city.
-class OpenGamesArgs {
+/// Open Lobbies (Solo view): one slot at a venue, every lobby at a venue, or the city board.
+class LobbiesArgs {
   final Json? venue;
-  final int? sportId;
+  final int? sportId, courtId, startHour;
+  final String? date;
 
-  /// City board: games anywhere in the city of this area.
+  /// Shown under the title, e.g. "Sat, 15 Nov · 7 PM · Pitch 1".
+  final String subtitle;
+
+  /// City board: lobbies anywhere in the city of this area.
   final int? areaId;
   final String cityName;
-  const OpenGamesArgs({this.venue, this.sportId, this.areaId, this.cityName = ''});
+  const LobbiesArgs({
+    this.venue,
+    this.sportId,
+    this.courtId,
+    this.startHour,
+    this.date,
+    this.subtitle = '',
+    this.areaId,
+    this.cityName = '',
+  });
 
   bool get isCity => venue == null;
+}
+
+/// Squad Builder: the slot the host picked on the matrix.
+class SquadArgs {
+  final Json venue;
+  final Json sport; // venue_sports entry: {sport_id, name, max_players, ...}
+  final Json court;
+  final DateTime date;
+  final int startHour, duration;
+
+  /// Slot rent for the whole squad (₹).
+  final int turfPrice;
+  const SquadArgs({
+    required this.venue,
+    required this.sport,
+    required this.court,
+    required this.date,
+    required this.startHour,
+    required this.duration,
+    required this.turfPrice,
+  });
 }
 
 /// Pass as `extra` to open a route with the splash cross-fade instead of the platform slide.

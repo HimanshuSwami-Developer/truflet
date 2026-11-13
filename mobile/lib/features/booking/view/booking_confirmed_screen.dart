@@ -242,7 +242,12 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> with Si
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(flex: 2, child: PrimaryButton('View full ticket', onTap: () => context.replaceWithTicket(b['id']))),
+                    Expanded(
+                      flex: 2,
+                      child: b['lobby'] != null
+                          ? PrimaryButton('Open Match Room', onTap: () => context.replaceWithMatch(b['lobby']['id']))
+                          : PrimaryButton('View full ticket', onTap: () => context.replaceWithTicket(b['id'])),
+                    ),
                   ],
                 ),
               ),

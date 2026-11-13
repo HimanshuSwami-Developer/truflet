@@ -35,8 +35,9 @@ lib/
 ```
 
 Features: splash, onboarding, location, auth (login, profile form, sign-in guards), shell (bottom tabs),
-explore, venue, booking (my bookings, slot picker, payment, confirmation, ticket), saved, notifications,
-support (help, policies), profile. Tabs: Explore · Bookings · Profile (`AppTab`).
+explore, venue, booking (my bookings, slot matrix, payment, confirmation, ticket), lobby (open lobbies, squad
+builder, match room, request thread, my matches, split checkout), saved, notifications, support (help, policies),
+profile. Tabs: Explore · Matches · Bookings · Profile (`AppTab`).
 
 ## Conventions
 

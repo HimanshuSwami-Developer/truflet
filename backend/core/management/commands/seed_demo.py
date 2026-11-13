@@ -43,6 +43,8 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **opts):
         if opts["reset"]:
+            from community.models import Lobby
+            Lobby.objects.all().delete()
             for m in (Booking,
                       Coupon, VenuePhoto, VenueSport, Court, Venue, Amenity, PlayerSport, Sport,
                       FAQ, PolicySection, RefundRule):
@@ -57,9 +59,54 @@ class Command(BaseCommand):
         self.venues()
         self.content()
         self.people()
+        self.matches()
         self.owner()
         self.stdout.write(self.style.SUCCESS("Demo data loaded. Demo player: arjun@turflet.app, demo turf owner: "
                                              "owner@turflet.app (code 123456 in dev mode)."))
+
+    def matches(self):
+        """Open lobbies so the solo flow, screening and Match Room have something to show."""
+        from bookings import services as booking_services
+        from community import services as match
+        S = {s.name: s for s in Sport.objects.all()}
+        U = {u.name: u for u in User.objects.all()}
+        me = U["Arjun Mehta"]
+        tomorrow = timezone.localdate() + timedelta(days=1)
+        kick = Venue.objects.get(name="Kickoff Football Hub")
+        gf = Venue.objects.get(name="Greenfield Sports Arena")
+
+        def friends(*names):
+            return [{"user_id": U[n].id, "tag": "known"} for n in names]
+
+        # 1 · crowdfunding: the turf isn't booked until the pool covers it
+        lobby, _ = match.create_lobby(U["Arif Khan"], {
+            "venue": kick.id, "court": kick.courts.get(name="Pitch 1").id, "sport": S["Football"].id,
+            "date": tomorrow.isoformat(), "start_hour": 19, "duration": 1, "capacity": 10,
+            "payment_rule": "split", "booking_mode": "crowdfund", "is_public": True,
+            "friends": friends("Faiz Ahmed", "Imran Shaikh", "Varun Nair") + [{"tag": "guest", "name": "Sameer"}]})
+        for n in ("Arif Khan", "Faiz Ahmed", "Imran Shaikh"):
+            match.pay_share(lobby, U[n], "upi")
+        match.send(lobby, U["Arif Khan"], "Bring a white and a dark tee 👕")
+
+        # 2 · book & recover: the host paid upfront, solo shares are recovered through escrow
+        lobby, booking = match.create_lobby(U["Vikram Joshi"], {
+            "venue": gf.id, "court": gf.courts.get(name="Court B").id, "sport": S["Cricket"].id,
+            "date": tomorrow.isoformat(), "start_hour": 20, "duration": 2, "capacity": 12,
+            "payment_rule": "split", "booking_mode": "book_recover", "is_public": True,
+            "friends": friends("Kabir Rao", "Rohan Kulkarni", "Siddharth Pai", "Dev Shetty", "Karan Gill")})
+        booking_services.pay(booking, "upi")
+        lobby.refresh_from_db()
+        for n in ("Kabir Rao", "Rohan Kulkarni", "Siddharth Pai"):
+            match.pay_share(lobby, U[n], "upi")
+
+        # 3 · the demo player hosts one, with a solo request waiting for screening
+        lobby, _ = match.create_lobby(me, {
+            "venue": gf.id, "court": gf.courts.get(name="Court C").id, "sport": S["Cricket"].id,
+            "date": (tomorrow + timedelta(days=1)).isoformat(), "start_hour": 19, "duration": 2, "capacity": 10,
+            "payment_rule": "split", "booking_mode": "crowdfund", "is_public": True,
+            "friends": friends("Aditya Mehra", "Karan Gill")})
+        match.pay_share(lobby, me, "upi")
+        match.request_join(lobby, U["Meera Iyer"], "Hi! I play cricket most weekends — happy to bowl. Can I join?")
 
     def owner(self):
         """A turf owner who manages the first venue, to try the owner view of the admin panel."""
@@ -97,20 +144,21 @@ class Command(BaseCommand):
 
     def catalog(self):
         sports = [
-            ("Cricket", "#15803D", "#DCFCE7", "cricket", 60, 8, "cricket"),
-            ("Football", "#1D4ED8", "#DBEAFE", "ball", 50, 7, "points"),
-            ("Badminton", "#6D28D9", "#EDE9FE", "racket", 30, 2, "points"),
-            ("Pickleball", "#854D0E", "#FEF3C7", "pickleball", 30, 2, "points"),
-            ("Tennis", "#0E7490", "#CFFAFE", "tennis", 60, 2, "points"),
-            ("Basketball", "#C2410C", "#FFEDD5", "basketball", 40, 5, "points"),
+            ("Cricket", "#15803D", "#DCFCE7", "cricket"),
+            ("Football", "#1D4ED8", "#DBEAFE", "ball"),
+            ("Badminton", "#6D28D9", "#EDE9FE", "racket"),
+            ("Pickleball", "#854D0E", "#FEF3C7", "pickleball"),
+            ("Tennis", "#0E7490", "#CFFAFE", "tennis"),
+            ("Basketball", "#C2410C", "#FFEDD5", "basketball"),
         ]
-        for i, (name, fg, bg, image, mins, size, scoring) in enumerate(sports):
-            s = Sport(name=name, fg_color=fg, bg_color=bg, match_minutes=mins, team_size=size, scoring=scoring, order=i)
+        for i, (name, fg, bg, image) in enumerate(sports):
+            s = Sport(name=name, fg_color=fg, bg_color=bg, order=i)
             img(s.image, image)
             s.save()
         amen = [("Parking", "parking", "#1D4ED8", "#DBEAFE"), ("Floodlights", "floodlights", "#854D0E", "#FEF3C7"),
                 ("Washroom", "washroom", "#6D28D9", "#EDE9FE"), ("Water", "water", "#0E7490", "#CFFAFE"),
-                ("Changing room", "changing", "#C2410C", "#FFEDD5"), ("Equipment", "equipment", "#15803D", "#DCFCE7")]
+                ("Changing room", "changing", "#C2410C", "#FFEDD5"), ("Equipment", "equipment", "#15803D", "#DCFCE7"),
+                ("Covered roof", "covered", "#0F766E", "#CCFBF1")]
         for i, (n, icon, fg, bg) in enumerate(amen):
             Amenity.objects.create(name=n, icon=icon, fg_color=fg, bg_color=bg, order=i)
 

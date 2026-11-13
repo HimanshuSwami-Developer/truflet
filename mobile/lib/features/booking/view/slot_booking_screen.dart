@@ -15,8 +15,9 @@ import '../../auth/auth_guard.dart';
 import '../cubit/slot_booking_cubit.dart';
 import '../cubit/slot_booking_state.dart';
 
-/// 6 · Slot booking (sport · date · court · duration · start time).
-/// Also used to reschedule an existing booking when [SlotBookingArgs.reschedule] is given.
+/// 2 · Venue & Slot Matrix: horizontal date strip and a slot grid tagged Available / Open lobby / Booked.
+/// After picking a slot the player chooses a play mode: Join solo (open lobbies on that slot) or
+/// Create a group (Squad Builder). Also reschedules an existing booking when [SlotBookingArgs.reschedule] is given.
 class SlotBookingScreen extends StatelessWidget {
   final SlotBookingArgs args;
   const SlotBookingScreen({super.key, required this.args});
@@ -48,27 +49,33 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
     if (error != null && mounted) toast(context, error);
   }
 
-  Future<void> _proceed() async {
+  Future<void> _reschedule() async {
     if (!await requireProfile(context)) return;
     _cubit.setBusy(true);
     try {
-      if (_cubit.state.isReschedule) {
-        await _cubit.reschedule();
-        if (!mounted) return;
-        toast(context, 'Booking rescheduled');
-        Navigator.of(context).pop(true);
-        return;
-      }
-      final b = await _cubit.hold();
+      await _cubit.reschedule();
       if (!mounted) return;
-      await context.pushPayment(b);
-      _load();
+      toast(context, 'Booking rescheduled');
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) toast(context, e.toString());
       _load();
     } finally {
       _cubit.setBusy(false);
     }
+  }
+
+  /// Play mode: Create a group → Squad Builder.
+  Future<void> _createGroup() async {
+    if (!await requireProfile(context) || !mounted) return;
+    await context.pushSquadBuilder(_cubit.squadArgs());
+    _load();
+  }
+
+  /// Play mode: Join solo → open lobbies on this slot.
+  Future<void> _joinSolo() async {
+    await context.pushLobbies(_cubit.lobbiesArgs());
+    _load();
   }
 
   @override
@@ -122,22 +129,13 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(isReschedule ? 'Reschedule slot' : 'Select your slot', style: d(20)),
+                          Text(isReschedule ? 'Reschedule slot' : 'Pick a slot', style: d(20)),
                           Text(
                             '${venue['name']} · ${venue['area']}',
                             style: t(13, c: C.muted),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (st.group != null || st.openGame)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Pill(
-                                st.group != null ? 'With ${st.group!['name']}' : 'Open game · strangers can join',
-                                bg: st.group != null ? C.blueSoft : C.limeSoft,
-                                fg: st.group != null ? C.blue : C.green700,
-                              ),
-                            ),
                         ],
                       ),
                     ),
@@ -277,7 +275,6 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                         ),
                       ),
                     ],
-                    if (st.openGame || st.group != null) _openPlayers(st),
                     Container(
                       margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                       padding: const EdgeInsets.all(16),
@@ -336,6 +333,18 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                                     width: 14,
                                     height: 14,
                                     decoration: BoxDecoration(
+                                      color: C.limeSoft,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: C.green700, width: 1.5),
+                                    ),
+                                  ),
+                                  'Open lobby',
+                                ),
+                                _legend(
+                                  Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
                                       color: const Color(0xFFE9ECE6),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
@@ -376,7 +385,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!c.valid && !loading)
+                  if (!c.valid && !loading && (isReschedule || st.lobbiesAtStart == 0))
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -400,125 +409,60 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                           ],
                         ),
                       ),
-                      if (!isReschedule) Text(c.valid ? inr(c.total) : '₹—', style: d(22)),
+                      if (!isReschedule)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(c.valid ? inr(c.total) : '₹—', style: d(22)),
+                            Text('turf for the squad', style: t(11, c: C.muted)),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  PrimaryButton(
-                    isReschedule ? 'Confirm new slot' : 'Proceed to pay',
-                    height: 56,
-                    radius: 16,
-                    shadow: false,
-                    loading: busy,
-                    trailing: c.valid ? const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18) : null,
-                    onTap: c.valid && !loading ? _proceed : null,
-                  ),
+                  if (isReschedule)
+                    PrimaryButton(
+                      'Confirm new slot',
+                      height: 56,
+                      radius: 16,
+                      shadow: false,
+                      loading: busy,
+                      trailing: c.valid ? const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18) : null,
+                      onTap: c.valid && !loading ? _reschedule : null,
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GhostButton(
+                            st.lobbiesAtStart > 0 ? 'Join solo · ${st.lobbiesAtStart}' : 'Join solo',
+                            icon: LucideIcons.userPlus,
+                            height: 56,
+                            bg: st.lobbiesAtStart > 0 ? C.limeSoft : C.chip,
+                            fg: st.lobbiesAtStart > 0 ? C.green900 : C.muted,
+                            border: Colors.transparent,
+                            onTap: st.lobbiesAtStart > 0 && !loading ? _joinSolo : null,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: PrimaryButton(
+                            'Create a group',
+                            height: 56,
+                            radius: 16,
+                            fontSize: 15,
+                            shadow: false,
+                            trailing: c.valid ? const Icon(LucideIcons.users, color: Colors.white, size: 18) : null,
+                            onTap: c.valid && !loading ? _createGroup : null,
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  /// Open / group game: how many players in total. Strangers pay total ÷ players each.
-  Widget _openPlayers(SlotBookingState st) {
-    final n = st.openPlayers;
-    Widget btn(String label, bool primary, VoidCallback onTap, String semantics) => Semantics(
-      button: true,
-      label: semantics,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: primary ? C.brand : C.ground,
-            borderRadius: BorderRadius.circular(12),
-            border: primary ? null : Border.all(color: C.line),
-          ),
-          child: Text(
-            label,
-            style: t(20, w: FontWeight.w700, c: primary ? Colors.white : C.ink),
-          ),
-        ),
-      ),
-    );
-    final group = st.group;
-    final stepper = Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Total players', style: t(13, w: FontWeight.w600)),
-              Text(
-                group != null
-                    ? '${st.reserved} in ${group['name']} · up to ${st.maxPlayers}'
-                    : 'Including you · up to ${st.maxPlayers}',
-                style: t(12, c: C.muted),
-              ),
-            ],
-          ),
-        ),
-        btn('−', false, () => _cubit.setOpenPlayers(n - 1), 'Fewer players'),
-        SizedBox(
-          width: 48,
-          child: Text('$n', textAlign: TextAlign.center, style: d(20)),
-        ),
-        btn('+', true, () => _cubit.setOpenPlayers(n + 1), 'More players'),
-      ],
-    );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: C.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            stepper,
-            if (group != null) ...[
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: C.divider),
-              const SizedBox(height: 12),
-              Semantics(
-                toggled: st.publishSpots,
-                child: GestureDetector(
-                  onTap: st.publicSpots > 0 ? _cubit.togglePublish : null,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Publish open spots', style: t(13, w: FontWeight.w600)),
-                            Text(
-                              st.publicSpots == 0
-                                  ? 'Your group fills this game — nothing to publish.'
-                                  : st.publishSpots
-                                  ? '${st.publicSpots} spot${st.publicSpots == 1 ? '' : 's'} shown to players in your city. They pay their share to you.'
-                                  : 'Only your group will play.',
-                              style: t(12, c: C.muted, h: 1.4),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Toggle(st.publishSpots && st.publicSpots > 0),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -580,15 +524,22 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
     final start = st.start, dur = st.dur;
     final h = s['hour'] as int;
     final past = s['status'] == 'past', booked = s['status'] == 'booked';
-    final sel = valid && start != null && h >= start && h < start + dur;
-    final clash = !valid && h == start;
+    final lobbies = past ? 0 : ((s['lobbies'] as int?) ?? 0);
+    final picked = start != null && h >= start && h < start + dur;
+    final sel = valid && picked;
+    final lobbyPick = !valid && h == start && lobbies > 0 && !st.isReschedule;
+    final clash = !valid && h == start && !lobbyPick;
     Color bg = Colors.white, fg = C.ink;
     Border border = Border.all(color: C.radioOff, width: 1.5);
     if (past) {
       bg = C.ground;
       fg = const Color(0xFF57625A);
       border = Border.all(color: const Color(0xFFC9D4CC));
-    } else if (booked) {
+    } else if (lobbyPick) {
+      bg = C.green700;
+      fg = Colors.white;
+      border = Border.all(color: C.green700);
+    } else if (booked && lobbies == 0) {
       bg = const Color(0xFFE9ECE6);
       fg = const Color(0xFF57625A);
       border = Border.all(color: const Color(0xFFE9ECE6));
@@ -599,27 +550,35 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
     } else if (clash) {
       fg = C.warnInk;
       border = Border.all(color: const Color(0xFFB45309), width: 2);
+    } else if (lobbies > 0) {
+      bg = C.limeSoft;
+      fg = C.green900;
+      border = Border.all(color: C.green700, width: 1.5);
     }
-    final peak = s['peak'] == true && !past && !booked && !sel;
+    final tappable = !past && (!booked || (lobbies > 0 && !st.isReschedule));
+    final spots = (s['lobby_spots'] as int?) ?? 0;
+    final peak = s['peak'] == true && !past && !booked && !sel && lobbies == 0;
     return Semantics(
       button: true,
-      enabled: !past && !booked,
-      selected: sel,
+      enabled: tappable,
+      selected: sel || lobbyPick,
       label:
           '${s['label']}${past
               ? ', past'
+              : lobbies > 0
+              ? ', open lobby, $spots spots left'
               : booked
               ? ', booked'
               : ', ${inr(s['price'])}${s['peak'] == true ? ', peak price' : ''}'}',
       child: GestureDetector(
-        onTap: past || booked ? null : () => _cubit.pickStart(h),
+        onTap: tappable ? () => _cubit.pickStart(h) : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(12),
             border: border,
-            boxShadow: sel ? const [BoxShadow(color: Color(0x4716803C), blurRadius: 14, offset: Offset(0, 6))] : null,
+            boxShadow: sel || lobbyPick ? const [BoxShadow(color: Color(0x4716803C), blurRadius: 14, offset: Offset(0, 6))] : null,
           ),
           child: Stack(
             children: [
@@ -629,11 +588,13 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                   children: [
                     Text(
                       s['label'],
-                      style: t(13, w: FontWeight.w700, c: fg, deco: booked ? TextDecoration.lineThrough : null),
+                      style: t(13, w: FontWeight.w700, c: fg, deco: booked && lobbies == 0 ? TextDecoration.lineThrough : null),
                     ),
                     Text(
                       past
                           ? 'Past'
+                          : lobbies > 0
+                          ? '$spots left'
                           : booked
                           ? 'Booked'
                           : inr(s['price']),

@@ -11,12 +11,14 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../data/repositories/venue_repository.dart';
 import '../../auth/auth_guard.dart';
-import '../../community/widgets/play_mode_sheet.dart';
+import '../../../app/router/app_navigation.dart';
+import '../../../app/router/app_routes.dart';
 import '../cubit/venue_details_cubit.dart';
 
 const amenityIcons = {
   'parking': LucideIcons.squareParking,
   'floodlights': LucideIcons.lightbulb,
+  'covered': LucideIcons.umbrella,
   'washroom': LucideIcons.bath,
   'water': LucideIcons.droplet,
   'changing': LucideIcons.shirt,
@@ -27,7 +29,7 @@ const amenityIcons = {
   'seating': LucideIcons.armchair,
 };
 
-/// 5 · Turf details
+/// 2 · Venue profile: photos, dimensions, surface, rules, amenities and cancellation policy → slot matrix
 class VenueDetailsScreen extends StatelessWidget {
   final int venueId;
   const VenueDetailsScreen({super.key, required this.venueId});
@@ -277,6 +279,57 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
                           ),
                         ),
                       ],
+                      if (asList(v['cancellation_policy']).isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        const H2('Cancellation policy'),
+                        const SizedBox(height: 10),
+                        CardBox(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          radius: 18,
+                          child: Column(
+                            children: [
+                              for (final r in asList(v['cancellation_policy']))
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 46,
+                                        padding: const EdgeInsets.symmetric(vertical: 6),
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: (r['percent'] ?? 0) > 0 ? C.mint : C.redSoft,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '${r['percent']}%',
+                                          style: t(13, w: FontWeight.w700, c: (r['percent'] ?? 0) > 0 ? C.green700 : C.redInk),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(r['title'] ?? '', style: t(14, w: FontWeight.w600)),
+                                            Text(r['subtitle'] ?? '', style: t(12, c: C.muted)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                                child: Text(
+                                  'Rain or venue cancellation: 100% refund to everyone who paid.',
+                                  style: t(12, c: C.muted, h: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       const H2('Location'),
                       const SizedBox(height: 10),
@@ -356,26 +409,32 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: GhostButton(
-                      'Solo with strangers',
-                      icon: LucideIcons.userPlus,
-                      height: 52,
-                      bg: C.limeSoft,
-                      fg: C.green900,
-                      border: Colors.transparent,
-                      onTap: cur == null ? null : () => playSolo(context, venue: v, sportId: cur['sport_id']),
+                  if ((v['open_lobbies'] ?? 0) > 0) ...[
+                    Expanded(
+                      child: GhostButton(
+                        '${v['open_lobbies']} open ${v['open_lobbies'] == 1 ? 'lobby' : 'lobbies'}',
+                        icon: LucideIcons.userPlus,
+                        height: 52,
+                        bg: C.limeSoft,
+                        fg: C.green900,
+                        border: Colors.transparent,
+                        onTap: () => context.pushLobbies(
+                          LobbiesArgs(venue: v, subtitle: '${v['name']} · ${v['area']}'),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
+                    const SizedBox(width: 10),
+                  ],
                   Expanded(
                     child: PrimaryButton(
-                      'Select a group',
+                      'Check slots',
                       height: 52,
                       radius: 16,
-                      fontSize: 14,
-                      trailing: const Icon(LucideIcons.users, color: Colors.white, size: 18),
-                      onTap: cur == null ? null : () => playWithGroup(context, venue: v, sportId: cur['sport_id']),
+                      fontSize: 15,
+                      trailing: const Icon(LucideIcons.calendarClock, color: Colors.white, size: 18),
+                      onTap: cur == null
+                          ? null
+                          : () => context.pushSlotBooking(SlotBookingArgs(venue: v, initialSportId: cur['sport_id'])),
                     ),
                   ),
                 ],

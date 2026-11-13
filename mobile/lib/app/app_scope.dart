@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
-import '../data/repositories/community_repository.dart';
+import '../data/repositories/lobby_repository.dart';
 import '../data/repositories/config_repository.dart';
 import '../data/repositories/location_repository.dart';
 import '../data/repositories/notification_repository.dart';
@@ -30,7 +30,7 @@ class AppScope extends StatelessWidget {
       RepositoryProvider<BookingRepository>.value(value: deps.bookings),
       RepositoryProvider<NotificationRepository>.value(value: deps.notifications),
       RepositoryProvider<SupportRepository>.value(value: deps.support),
-      RepositoryProvider<CommunityRepository>.value(value: deps.community),
+      RepositoryProvider<LobbyRepository>.value(value: deps.lobbies),
     ],
     child: BlocProvider.value(value: deps.appCubit, child: child),
   );

@@ -5,9 +5,11 @@ import '../../../app/router/app_routes.dart';
 import '../../../core/network/json.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/venue_repository.dart';
+import '../../../core/utils/formatters.dart';
 import 'slot_booking_state.dart';
 
-/// 6 · Slot picker: sport · date · court · duration · start time. Also reschedules a booking.
+/// 2 · Venue & Slot Matrix: sport · date · court · duration · start time, with live slot states
+/// (Available / Open lobby / Booked). Also reschedules a booking.
 class SlotBookingCubit extends Cubit<SlotBookingState> {
   final VenueRepository _venues;
   final BookingRepository _bookings;
@@ -24,10 +26,7 @@ class SlotBookingCubit extends Cubit<SlotBookingState> {
       reschedule: rs,
       today: today,
       sportIdx: sports.isEmpty ? 0 : sports.indexWhere((s) => s['sport_id'] == wanted).clamp(0, sports.length - 1),
-      group: a.group,
-      openGame: a.openGame,
     );
-    if (a.openGame || a.group != null) s = s.copyWith(openPlayers: s.maxPlayers);
     if (a.initialDate != null) {
       final base = DateTime(today.year, today.month, today.day);
       s = s.copyWith(day: a.initialDate!.difference(base).inDays.clamp(0, 13));
@@ -72,10 +71,7 @@ class SlotBookingCubit extends Cubit<SlotBookingState> {
     }
   }
 
-  void selectSport(int i) {
-    final next = state.copyWith(sportIdx: i, courtIdx: 0);
-    _emit(state.openGame || state.group != null ? next.copyWith(openPlayers: next.maxPlayers) : next);
-  }
+  void selectSport(int i) => _emit(state.copyWith(sportIdx: i, courtIdx: 0));
 
   void selectDay(int i) => _emit(state.copyWith(day: i));
   void selectCourt(int i) => _emit(state.copyWith(courtIdx: i));
@@ -87,22 +83,26 @@ class SlotBookingCubit extends Cubit<SlotBookingState> {
   Future<void> reschedule() =>
       _bookings.reschedule(state.reschedule!['id'], date: _day, startHour: state.start, courtId: state.court!['id']);
 
-  /// Holds the chosen slot and returns the unpaid booking for the payment screen.
-  Future<Json> hold() => _bookings.hold({
-    'venue': state.venue['id'],
-    'court': state.court!['id'],
-    'sport': state.sport['sport_id'],
-    'date': _day,
-    'start_hour': state.start,
-    'duration': state.dur,
-    if (state.group != null) 'group': state.group!['id'],
-    if (state.publishes) 'open_players': state.openPlayers,
-  });
+  /// The picked slot, for the Squad Builder ("Create a group").
+  SquadArgs squadArgs() => SquadArgs(
+    venue: state.venue,
+    sport: state.sport,
+    court: state.court!,
+    date: state.date,
+    startHour: state.start!,
+    duration: state.dur,
+    turfPrice: state.check.total,
+  );
 
-  /// Total players for an open game (2 … the sport's max).
-  void togglePublish() => _emit(state.copyWith(publishSpots: !state.publishSpots));
-
-  void setOpenPlayers(int n) => _emit(state.copyWith(openPlayers: n.clamp(2, state.maxPlayers)));
+  /// Open lobbies covering the picked start hour ("Join solo").
+  LobbiesArgs lobbiesArgs() => LobbiesArgs(
+    venue: state.venue,
+    sportId: state.sport['sport_id'],
+    courtId: state.court!['id'],
+    date: _day,
+    startHour: state.start,
+    subtitle: '${DateFormat('EEE, d MMM').format(state.date)} · ${fmtHour(state.start!)} · ${state.court!['name']}',
+  );
 
   void _emit(SlotBookingState s) {
     if (!isClosed) emit(s);

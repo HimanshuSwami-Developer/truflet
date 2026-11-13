@@ -63,6 +63,10 @@ class Coupon(TimeStamped):
         return None
 
 
+def make_checkin_pin():
+    return f"{secrets.randbelow(10000):04d}"
+
+
 def make_booking_code(prefix="TRF"):
     """e.g. TRF-7N26-4821 (day, month initial, year, random)."""
     d = timezone.localdate()
@@ -78,7 +82,8 @@ class Booking(TimeStamped):
         ("expired", "Expired"),
     ]
     PAYMENT_STATUS = [("pending", "Pending"), ("paid", "Paid"), ("refunded", "Refunded"), ("failed", "Failed")]
-    METHODS = [("upi", "UPI"), ("card", "Card"), ("net", "Net banking"), ("wallet", "Wallet"), ("venue", "At venue")]
+    METHODS = [("upi", "UPI"), ("card", "Card"), ("net", "Net banking"), ("wallet", "Wallet"), ("venue", "At venue"),
+               ("pool", "Split pool")]
 
     code = models.CharField(max_length=20, unique=True, default=make_booking_code)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bookings")
@@ -113,6 +118,8 @@ class Booking(TimeStamped):
     refunded_at = models.DateTimeField(null=True, blank=True)
 
     checked_in_at = models.DateTimeField(null=True, blank=True)
+    checkin_pin = models.CharField(max_length=4, default=make_checkin_pin,
+                                   help_text="4-digit PIN the venue enters instead of scanning the QR")
     reschedule_count = models.PositiveSmallIntegerField(default=0)
     notes = models.TextField(blank=True, help_text="Internal notes")
 

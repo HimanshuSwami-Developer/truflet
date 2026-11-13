@@ -43,17 +43,22 @@ api = [
     path("bookings/<int:pk>/pay/", bookings.pay),
     path("bookings/<int:pk>/cancel/", bookings.cancel),
     path("bookings/<int:pk>/reschedule/", bookings.reschedule),
-    # groups & open games
-    path("groups/", community.groups),
-    path("groups/join/", community.group_join),
-    path("groups/<int:pk>/", community.group_detail),
-    path("groups/<int:pk>/members/", community.group_add_member),
-    path("groups/<int:pk>/members/<int:user_id>/remove/", community.group_remove_member),
-    path("groups/<int:pk>/leave/", community.group_leave),
-    path("venues/<int:pk>/open-games/", community.venue_open_games),
-    path("open-games/", community.city_open_games),
-    path("open-games/<int:pk>/join/", community.open_game_join),
-    path("open-games/<int:pk>/leave/", community.open_game_leave),
+    # matches (lobbies)
+    path("amenities/", venues.amenities),
+    path("lobbies/", community.lobbies),
+    path("lobbies/mine/", community.my_lobbies),
+    path("lobbies/players/", community.players_lookup),
+    path("lobbies/<int:pk>/", community.lobby_view),
+    path("lobbies/<int:pk>/request/", community.lobby_request),
+    path("lobbies/<int:pk>/messages/", community.lobby_messages),
+    path("lobbies/<int:pk>/pay/", community.lobby_pay),
+    path("lobbies/<int:pk>/requests/", community.lobby_requests),
+    path("lobbies/<int:pk>/requests/<int:rid>/", community.request_detail),
+    path("lobbies/<int:pk>/requests/<int:rid>/messages/", community.request_messages),
+    path("lobbies/<int:pk>/requests/<int:rid>/<str:action>/", community.request_decide),
+    path("lobbies/<int:pk>/members/<int:member_id>/remove/", community.lobby_remove_member),
+    path("lobbies/<int:pk>/<str:action>/", community.lobby_action),
+    path("venues/<int:pk>/lobbies/", community.venue_lobbies),
 ]
 
 urlpatterns = [

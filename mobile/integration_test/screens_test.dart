@@ -25,6 +25,10 @@ import 'package:turflet/features/booking/view/booking_confirmed_screen.dart';
 import 'package:turflet/features/booking/view/payment_screen.dart';
 import 'package:turflet/features/booking/view/slot_booking_screen.dart';
 import 'package:turflet/features/booking/view/ticket_screen.dart';
+import 'package:turflet/features/lobby/view/lobbies_screen.dart';
+import 'package:turflet/features/lobby/view/match_room_screen.dart';
+import 'package:turflet/features/lobby/view/request_thread_screen.dart';
+import 'package:turflet/features/lobby/view/squad_builder_screen.dart';
 import 'package:turflet/features/location/view/location_screen.dart';
 import 'package:turflet/features/notifications/view/notifications_screen.dart';
 import 'package:turflet/features/onboarding/view/onboarding_screen.dart';
@@ -71,13 +75,16 @@ void main() {
     final area = asList(cities.first['areas']).first;
     await state.setArea(id: area['id'], area: area['name'], city: cities.first['name'], lat: area['lat'], lng: area['lng']);
 
-    final venues = asList(await api.get('/venues/', {'area': area['id']}));
+    final venues = asList(asMap(await api.get('/venues/', {'area': area['id'], 'radius': 'city'}))['items']);
     final gf = venues.firstWhere((v) => v['name'] == 'Greenfield Sports Arena');
     final venue = asMap(await api.get('/venues/${gf['id']}/'));
     final upcoming = asList(asMap(await api.get('/bookings/', {'tab': 'upcoming'}))['items']);
     final ticketId = upcoming.first['id'] as int;
     final day = DateTime.now().add(const Duration(days: 5));
     final ds = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+    // matches: the demo player hosts one with a solo request waiting (see seed_demo)
+    final hosted = asList(asMap(await api.get('/lobbies/mine/'))['upcoming']).firstWhere((l) => l['my_role'] == 'host');
+    final requests = asList(await api.get('/lobbies/${hosted['id']}/requests/'));
     final hold = asMap(
       await api.post('/bookings/', {
         'venue': gf['id'],
@@ -177,7 +184,7 @@ void main() {
       );
       await open('03-location', const LocationScreen(first: true), s);
       await open('03b-login', const LoginScreen(), s);
-      for (var tab = 0; tab < 3; tab++) {
+      for (var tab = 0; tab < 4; tab++) {
         state.setTab(tab);
         await open(
           'tab$tab',
@@ -185,16 +192,50 @@ void main() {
           s,
           then: () async {
             if (tab == AppTab.bookings) {
-              await tapText('Completed', 'tab1b-completed', s);
-              await tapText('Cancelled', 'tab1c-cancelled', s);
+              await tapText('Completed', 'tab${tab}b-completed', s);
+              await tapText('Cancelled', 'tab${tab}c-cancelled', s);
             }
-            if (tab == AppTab.profile) await tapText('Edit profile', 'tab2b-editing', s);
+            if (tab == AppTab.matches) await tapText('Past', 'tab${tab}b-past', s);
+            if (tab == AppTab.profile) await tapText('Edit profile', 'tab${tab}b-editing', s);
           },
         );
       }
       state.setTab(AppTab.explore);
       await open('05-details', VenueDetailsScreen(venueId: gf['id']), s);
       await open('06-booking', SlotBookingScreen(args: SlotBookingArgs(venue: venue)), s);
+      await open(
+        '06b-squad-builder',
+        SquadBuilderScreen(
+          args: SquadArgs(
+            venue: venue,
+            sport: asList(venue['venue_sports']).first,
+            court: asList(venue['courts']).last,
+            date: day,
+            startHour: 19,
+            duration: 2,
+            turfPrice: 3000,
+          ),
+        ),
+        s,
+        then: () async {
+          await tapText('Add guest', '06c-add-guest-sheet', s);
+          FocusManager.instance.primaryFocus?.unfocus(); // the sheet autofocuses: close the keyboard
+          await settle();
+        },
+      );
+      await open('06d-lobbies-city', LobbiesScreen(args: LobbiesArgs(areaId: area['id'], cityName: cities.first['name'])), s);
+      await open(
+        '06e-match-room',
+        MatchRoomScreen(lobbyId: hosted['id']),
+        s,
+        then: () async {
+          await tapText('Players · ${hosted['taken']}', '06f-match-players', s);
+          await tapText('Requests', '06g-match-requests', s);
+        },
+      );
+      if (requests.isNotEmpty) {
+        await open('06h-request-thread', RequestThreadScreen(lobbyId: hosted['id'], requestId: requests.first['id']), s);
+      }
       await open('07-payment', PaymentScreen(booking: hold), s);
       await open('08-success', BookingConfirmedScreen(booking: upcoming.first), s);
       await open(

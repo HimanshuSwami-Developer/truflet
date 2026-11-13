@@ -60,6 +60,31 @@ Demo player after `seed_demo`: email **arjun@turflet.app**, code **123456** (dev
 
 Two screens are additions that the design implied but didn't draw, styled with the same tokens: **email code sign-in** and **notifications** (the bell on Explore).
 
+### Matches (squads, solo players, chat and split payments)
+
+Built from `Turf-Platform-Product-Flow-and-Solutions.docx`. Tabs: Explore · **Matches** · Bookings · Profile.
+
+1. **Home / Discovery**: arenas within 3 km, widened automatically to 5 km, 10 km, then city-wide (with a banner) so the list is never empty. Filters: sport, free slot on a day and time window, hourly price range and amenities. Venue cards show the live open-lobby count.
+2. **Venue & Slot Matrix**: every slot shows Available, Open lobby (X left) or Booked. After picking a slot the player chooses **Join solo** or **Create a group**.
+3. **Open Lobbies (solo view)**: host reliability, Turf locked vs Crowdfunding, a filled-spots bar (7/10), the per-head cost and **Request to join**.
+4. **Squad Builder**: capacity stepper, friends tagged Known (on Turflet) or Guest (host covers them), a payment rule set once (Split equally or Host covers all), Open to solo players, and Book & recover vs Crowdfund first. Book & recover is recommended from 6 PM to 10 PM.
+5. **Request screening**: a solo request opens a private 1-on-1 thread with the host, who sees the player's attendance stats and taps Approve or Decline. Unapproved players never see the squad chat.
+6. **Match Room**: a pinned header (Turf locked or Unbooked, Paid 8/10, Booking QR and 4-digit PIN), group chat, payment cards with a 15-minute countdown, players, and the host's Requests tab.
+7. **Split checkout & escrow**: turf share, guest shares and platform fee, UPI or wallet, and an escrow summary. Check-in and Report no-show live in the Match Room.
+
+**Money rules** (`community/services.py`, timers applied lazily whenever a match is read):
+- Shares go into the platform's escrow and never to the host. **Crowdfund first** doesn't block the turf calendar. As soon as the pool covers the turf, the slot is booked (`payment_method = pool`) and the pool settles to the venue.
+- **Book & recover**: the host pays the slot upfront. Shares are released to the host's Turflet balance when the venue scans the QR or enters the PIN at the check-in desk, when the host and a solo joiner check in by GPS within 150 m (kickoff ± 15 min), or 15 minutes after the match ends if nobody reported a no-show. A report puts the payout on hold, as Disputed under Admin → Matches.
+- An approved solo player who doesn't pay within 15 minutes is removed and the spot reopens.
+- Crowdfunding alerts for the host: the slot was booked by another group, or the lobby isn't full 60 minutes before kickoff. The host can pay the balance, switch slot, or unpublish (paid solo players are refunded and the squad chat stays). If the pool isn't full by kickoff, everyone is refunded.
+- Refunds: a venue or rain cancellation refunds everyone 100%. A player who leaves 30 minutes or more before kickoff is refunded once a replacement pays, or right away if the turf isn't booked yet. Leaving later than that is non-refundable.
+- `split_fee` (App settings, default ₹15) is the platform fee on each split payment.
+- The payment provider is still `mock`. Going live means a gateway with split settlements (Razorpay Route or Cashfree Easy Split) behind `charge_amount` and `refund_amount` in `bookings/payments.py`.
+
+```bash
+cd backend && DATABASE_URL=sqlite:///test.sqlite3 python manage.py test community   # match flows end to end
+```
+
 ## 3. Admin panel (`/admin-panel/`)
 
 Built with Django templates, Tailwind (CDN) and jQuery: live search and filters, AJAX toggles and deletes, drag-and-drop photo upload to Cloudinary, image previews, and global search.
@@ -69,6 +94,7 @@ Built with Django templates, Tailwind (CDN) and jQuery: live search and filters,
 - **Venues**: details, sport pricing (base + peak surcharge), courts, photos, blocked slots, and a day-by-day **slot board**
 - **Bookings**: filter by status/payment/venue, detail page, check in, mark completed, cancel with full refund, internal notes
 - **Coupons, reviews, players** (wallet top-ups, bookings history)
+- **Matches**: lobbies (status, alerts, payout), match players (escrow per player) and join requests. The check-in desk accepts the booking ID, the QR or the 4-digit PIN, and checking in releases a match's escrowed shares to the host.
 - **Content**: FAQs, refund rules (these drive the real refund calculation), policy sections, support tickets (reply), notifications
 - **Broadcast** a notification to every player, and **App settings** (convenience fee, GST, hold minutes, offer banner, support contacts)
 

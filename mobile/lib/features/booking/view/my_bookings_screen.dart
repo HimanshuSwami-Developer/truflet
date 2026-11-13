@@ -199,16 +199,14 @@ class _MyBookingsView extends StatelessWidget {
                         Text(km, style: t(13, c: C.muted)),
                         const SizedBox(height: 4),
                         SportPill(b['sport'], label: '${b['sport']['name']} · ${b['court']['name']}'),
-                        if (b['open_game'] != null || b['group'] != null) ...[
+                        if (b['lobby'] != null) ...[
                           const SizedBox(height: 6),
-                          b['group'] != null
-                              ? Pill('With ${b['group']['name']}', bg: C.blueSoft, fg: C.blue)
-                              : Pill(
-                                  '${b['role'] == 'player' ? 'Joined open game' : 'Open game'} · '
-                                  '${b['open_game']['joined_count']}/${b['open_game']['total_players']} in',
-                                  bg: C.limeSoft,
-                                  fg: C.green700,
-                                ),
+                          Pill(
+                            '${b['role'] == 'player' ? 'Joined match' : 'Match'} · '
+                            '${b['lobby']['taken']}/${b['lobby']['capacity']} in',
+                            bg: C.limeSoft,
+                            fg: C.green700,
+                          ),
                         ],
                       ],
                     ),

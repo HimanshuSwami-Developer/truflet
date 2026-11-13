@@ -30,14 +30,17 @@ extension AppNavigation on BuildContext {
   Future<bool?> pushSlotBooking(SlotBookingArgs args) => push<bool>(AppRoutes.slotBooking, extra: args);
   Future<void> pushPayment(Json booking) => push(AppRoutes.payment, extra: booking);
   Future<void> pushTicket(int bookingId) => push(AppRoutes.ticketOf(bookingId));
-  Future<void> pushOpenGames(OpenGamesArgs args) => push(AppRoutes.openGames, extra: args);
-
-  /// Resolves to true when the player left the group.
-  Future<bool?> pushGroup(int id) => push<bool>(AppRoutes.groupOf(id));
+  Future<void> pushLobbies(LobbiesArgs args) => push(AppRoutes.lobbies, extra: args);
+  Future<void> pushSquadBuilder(SquadArgs args) => push(AppRoutes.squad, extra: args);
+  Future<void> pushMatch(int lobbyId) => push(AppRoutes.matchOf(lobbyId));
+  Future<void> pushRequestThread(int lobbyId, int requestId) => push(AppRoutes.requestOf(lobbyId, requestId));
 
   // ------------------------------------------------------------ replace the current screen
   Future<void> replaceWithBookingConfirmed(Json booking) => _replace(AppRoutes.bookingConfirmed, extra: booking);
   Future<void> replaceWithTicket(int bookingId) => _replace(AppRoutes.ticketOf(bookingId));
+  Future<void> replaceWithPayment(Json booking) => _replace(AppRoutes.payment, extra: booking);
+  Future<void> replaceWithMatch(int lobbyId) => _replace(AppRoutes.matchOf(lobbyId));
+  Future<void> replaceWithRequestThread(int lobbyId, int requestId) => _replace(AppRoutes.requestOf(lobbyId, requestId));
 
   /// Like Navigator.pushReplacement: the replaced screen's `push` future resolves (with null)
   /// so the screen underneath can refresh. go_router's pushReplacement alone never resolves it.

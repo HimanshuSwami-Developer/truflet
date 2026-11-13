@@ -10,16 +10,6 @@ class SlotBookingState {
   final List<Json> slots;
   final bool loading, busy;
 
-  /// Playing with this group (members are notified once paid).
-  final Json? group;
-
-  /// Open to strangers; [openPlayers] = total players including the host.
-  final bool openGame;
-  final int openPlayers;
-
-  /// Group game: publish the spots the group doesn't fill to players in the city.
-  final bool publishSpots;
-
   const SlotBookingState({
     required this.venue,
     required this.reschedule,
@@ -32,23 +22,10 @@ class SlotBookingState {
     this.slots = const [],
     this.loading = true,
     this.busy = false,
-    this.group,
-    this.openGame = false,
-    this.openPlayers = 10,
-    this.publishSpots = true,
   });
 
-  /// Players already coming: the whole group, or just me.
-  int get reserved => group != null ? ((group!['member_count'] as int?) ?? 1) : 1;
-
-  /// Spots that will be listed for strangers in the city.
-  int get publicSpots => (openPlayers - reserved).clamp(0, 999);
-
-  /// Whether this booking publishes open spots.
-  bool get publishes => openGame || (group != null && publishSpots && publicSpots > 0);
-
-  /// Most players the selected sport allows on a court.
-  int get maxPlayers => ((sports.isEmpty ? null : sport['max_players']) as int?) ?? 16;
+  /// Open lobbies (groups recruiting solo players) covering the picked start hour.
+  int get lobbiesAtStart => start == null ? 0 : ((slotAt(start!)?['lobbies'] as int?) ?? 0);
 
   bool get isReschedule => reschedule != null;
   List<Json> get sports => asList(venue['venue_sports']);
@@ -94,8 +71,6 @@ class SlotBookingState {
     List<Json>? slots,
     bool? loading,
     bool? busy,
-    int? openPlayers,
-    bool? publishSpots,
   }) => SlotBookingState(
     venue: venue,
     reschedule: reschedule,
@@ -108,9 +83,5 @@ class SlotBookingState {
     slots: slots ?? this.slots,
     loading: loading ?? this.loading,
     busy: busy ?? this.busy,
-    group: group,
-    openGame: openGame,
-    openPlayers: openPlayers ?? this.openPlayers,
-    publishSpots: publishSpots ?? this.publishSpots,
   );
 }

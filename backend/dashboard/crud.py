@@ -14,7 +14,7 @@ from django.db import models
 
 from accounts.models import User
 from bookings.models import Booking, Coupon
-from community.models import GroupMembership, OpenGame, OpenGamePlayer, PlayerGroup
+from community.models import JoinRequest, Lobby, LobbyMember
 from core.models import FAQ, Notification, PolicySection, RefundRule, SupportTicket
 from venues.models import Amenity, Area, BlockedSlot, City, Court, Review, Sport, Venue, VenuePhoto, VenueSport
 
@@ -188,8 +188,8 @@ RESOURCES = [
              owner_path="venue__owner", owner_section="My grounds",
              owner_fields=["venue", "court", "date", "start_hour", "end_hour", "reason"]),
     Resource("sports", Sport, "Sports",
-             ["name", "fg_color", "bg_color", "image", "match_minutes", "team_size", "scoring", "order", "is_active"],
-             [col("image", "", "image"), col("name"), col("fg_color", "Colour", "color"), col("scoring"),
+             ["name", "fg_color", "bg_color", "image", "order", "is_active"],
+             [col("image", "", "image"), col("name"), col("fg_color", "Colour", "color"),
               col("order"), col("is_active", "Active", "bool")], search=["name"], icon="activity", toggles=["is_active"]),
     Resource("amenities", Amenity, "Amenities", ["name", "icon", "fg_color", "bg_color", "order"],
              [col("name"), col("icon"), col("fg_color", "Colour", "color"), col("order")], search=["name"], icon="star"),
@@ -231,21 +231,25 @@ RESOURCES = [
              detail_url="dashboard:user_detail",
              help="Turn on “Turf owner” to let someone manage their own grounds, then set them as the owner on "
                   "those venues. They sign in at /admin-panel/ with an email code."),
-    # ------------------------------------------------ playing together
-    Resource("player-groups", PlayerGroup, "Groups", ["name", "created_by", "invite_code"],
-             [col("name"), col("created_by", "Created by"), col("invite_code", "Code"), col("created_at", "Created", "date")],
-             search=["name", "invite_code"], icon="users", section="Play together"),
-    Resource("group-members", GroupMembership, "Group members", ["group", "user", "role"],
-             [col("group"), col("user"), col("role", "Role", "badge")], filters=["group", "role"], icon="user",
-             section="Play together"),
-    Resource("open-games", OpenGame, "Open games", ["total_players"],
-             [col("booking"), col("booking__venue", "Venue"), col("booking__date", "Date"),
-              col("total_players", "Players"), col("created_at", "Opened", "date")],
-             search=["booking__code", "booking__venue__name"], icon="user-plus", section="Play together",
-             can_create=False, can_delete=False, select_related=["booking__venue"]),
-    Resource("open-game-players", OpenGamePlayer, "Open game players", ["status"],
-             [col("game"), col("user"), col("amount", "Paid", "money"), col("status", "Status", "badge")],
-             filters=["status"], icon="ticket", section="Play together", can_create=False, can_delete=False),
+    # ------------------------------------------------ matches
+    Resource("lobbies", Lobby, "Matches", ["status", "is_public", "alert", "payout_status"],
+             [col("venue"), col("date", "Date"), col("start_hour", "Hour"), col("host", "Host"),
+              col("capacity", "Players"), col("payment_rule", "Rule", "badge"), col("booking_mode", "Mode", "badge"),
+              col("status", "Status", "badge"), col("payout_status", "Payout", "badge")],
+             search=["venue__name", "host__email", "host__name"], filters=["status", "payout_status", "payment_rule"],
+             icon="users", section="Matches", can_create=False, can_delete=False,
+             select_related=["venue", "host"],
+             help="A no-show report puts the payout on hold (Disputed). After checking the support ticket, set "
+                  "Payout back to “Held in escrow” to pay the host — it's released the next time the match is opened."),
+    Resource("lobby-members", LobbyMember, "Match players", ["status", "escrow", "refund_due"],
+             [col("lobby"), col("user"), col("guest_name", "Guest"), col("tag", "Tag", "badge"),
+              col("status", "Status", "badge"), col("share_paid", "Share", "money"), col("escrow", "Escrow", "badge")],
+             filters=["tag", "status", "escrow"], icon="user", section="Matches", can_create=False, can_delete=False,
+             select_related=["lobby__venue", "user"]),
+    Resource("join-requests", JoinRequest, "Join requests", ["status"],
+             [col("lobby"), col("user"), col("status", "Status", "badge"), col("created_at", "Asked", "date")],
+             filters=["status"], icon="user-plus", section="Matches", can_create=False, can_delete=False,
+             select_related=["lobby__venue", "user"]),
     # ------------------------------------------------ content
     Resource("faqs", FAQ, "FAQs", ["question", "answer", "order", "is_active"],
              [col("question"), col("order"), col("is_active", "Active", "bool")], search=["question", "answer"],
