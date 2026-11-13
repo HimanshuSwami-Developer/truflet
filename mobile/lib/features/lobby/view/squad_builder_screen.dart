@@ -37,14 +37,13 @@ class _SquadBuilderView extends StatelessWidget {
     try {
       final lobby = await cubit.create();
       if (!context.mounted) return;
-      final booking = lobby['checkout_booking'];
-      if (booking != null) {
-        // host pays the turf now → payment → confirmation → Match Room
-        await context.replaceWithPayment(asMap(booking));
-      } else {
-        toast(context, 'Lobby created. Pay your share to start the pool.');
-        await context.replaceWithMatch(lobby['id']);
-      }
+      // Creating a match never charges anything: the host locks the turf (or pays a pool share)
+      // from the Match Room when ready, and friends get an invite to accept.
+      toast(
+        context,
+        lobby['status'] == 'draft' ? 'Match created. Lock the turf when you\'re ready.' : 'Match created. Pay your share to start the pool.',
+      );
+      await context.replaceWithMatch(lobby['id']);
     } catch (e) {
       if (context.mounted) toast(context, e.toString());
     }
@@ -501,7 +500,7 @@ class _SquadBuilderView extends StatelessWidget {
                 Text('Add a friend', style: d(22)),
                 const SizedBox(height: 6),
                 Text(
-                  'Known players are on Turflet: they get a payment card in the Match Room chat.',
+                  'Known players are on Turflet: they get an invite and join once they accept.',
                   style: t(13, c: C.muted, h: 1.4),
                 ),
                 const SizedBox(height: 14),

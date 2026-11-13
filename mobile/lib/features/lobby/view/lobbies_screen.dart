@@ -34,6 +34,15 @@ class LobbiesScreen extends StatelessWidget {
 Future<void> openLobby(BuildContext context, Json lobby, {VoidCallback? onChanged}) async {
   final role = lobby['my_role'];
   if (role == 'host' || role == 'member') return context.pushMatch(lobby['id']);
+  if (role == 'invited') {
+    final accepted = await sheet<bool>(context, (_) => _InviteSheet(lobby: lobby));
+    onChanged?.call();
+    if (accepted == true && context.mounted) {
+      await context.pushMatch(lobby['id']);
+      onChanged?.call();
+    }
+    return;
+  }
   if (role == 'requested' && lobby['my_request_id'] != null) {
     return context.pushRequestThread(lobby['id'], lobby['my_request_id']);
   }
@@ -139,6 +148,61 @@ class _LobbiesView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A friend added you in their Squad Builder: accept to enter the Match Room, or decline to free the spot.
+class _InviteSheet extends StatefulWidget {
+  final Json lobby;
+  const _InviteSheet({required this.lobby});
+  @override
+  State<_InviteSheet> createState() => _InviteSheetState();
+}
+
+class _InviteSheetState extends State<_InviteSheet> {
+  String? busy;
+
+  Future<void> _answer(String action) async {
+    setState(() => busy = action);
+    try {
+      await context.read<LobbyRepository>().action(widget.lobby['id'], action);
+      if (mounted) Navigator.pop(context, action == 'accept-invite');
+    } catch (e) {
+      if (mounted) toast(context, e.toString());
+    } finally {
+      if (mounted) setState(() => busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final g = widget.lobby;
+    final split = (g['per_head'] ?? 0) > 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('${g['host']['name']} invited you', style: d(22)),
+        const SizedBox(height: 6),
+        Text('${g['sport']['name']} at ${g['venue']['name']}', style: t(14, w: FontWeight.w600)),
+        Text('${g['date_label']} · ${g['time_label']} · ${g['taken']}/${g['capacity']} in', style: t(13, c: C.muted)),
+        const SizedBox(height: 14),
+        CardBox(
+          shadow: null,
+          border: Border.all(color: C.line),
+          padding: const EdgeInsets.all(14),
+          child: Text(
+            split
+                ? 'Your share is ${inr(g['per_head'])}. You pay it into escrow from the Match Room — never to the host.'
+                : '${g['host']['name']} is covering the slot — you play free.',
+            style: t(13, h: 1.4),
+          ),
+        ),
+        const SizedBox(height: 14),
+        PrimaryButton('Accept & join', loading: busy == 'accept-invite', onTap: busy == null ? () => _answer('accept-invite') : null),
+        const SizedBox(height: 8),
+        GhostButton('Decline', onTap: busy == null ? () => _answer('decline-invite') : null),
+      ],
     );
   }
 }

@@ -94,6 +94,19 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
     }
   }
 
+  /// Book & Recover host is ready to pay: hold the slot, then pay for it.
+  Future<void> _lockTurf() async {
+    try {
+      final r = await context.read<LobbyRepository>().action(_cubit.lobbyId, 'lock');
+      await _cubit.applied(r);
+      if (!mounted) return;
+      await context.pushPayment(asMap(r['checkout_booking']));
+      _cubit.reload();
+    } catch (e) {
+      if (mounted) toast(context, e.toString());
+    }
+  }
+
   /// Host never finished paying the held slot: resume the payment.
   Future<void> _resumeHostPayment(int bookingId) async {
     try {
@@ -601,6 +614,21 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
           actions: [act('Pay & lock turf', () => _resumeHostPayment(lobby['held_booking']), primary: true)],
         ),
       );
+    } else if (st.isHost && host['can_lock'] == true && lobby['alert'] != 'slot_taken') {
+      out.add(
+        banner(
+          icon: LucideIcons.lockOpen,
+          bg: C.coralSoft,
+          fg: C.orangeInk,
+          title: 'Turf not booked yet',
+          body: 'Get your squad together first. Pay ${inr(host['lock_amount'])} to lock the slot when you\'re ready — '
+              'until then another group can still book it.',
+          actions: [
+            act('Lock turf', _lockTurf, primary: true),
+            if (host['can_switch'] == true) act('Switch slot', () => _switchSlot(lobby)),
+          ],
+        ),
+      );
     }
     if (me['can_pay'] == true) {
       final until = DateTime.tryParse(me['pay_by'] ?? '');
@@ -681,7 +709,9 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
                     ],
                   ),
                 ),
-                if (m['paid'] == true)
+                if (m['status'] == 'invited')
+                  const Pill('Invited', bg: C.chip, fg: C.muted)
+                else if (m['paid'] == true)
                   const Pill('Paid', bg: C.mint, fg: C.green700)
                 else
                   Pill('Due ${inr(m['amount_due'])}', bg: C.amberSoft, fg: C.amber),

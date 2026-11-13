@@ -39,7 +39,7 @@ class MatchTestCase(TestCase):
         c.force_authenticate(user)
         return c
 
-    def create(self, **extra):
+    def create(self, accept_friend=True, **extra):
         body = {"venue": self.venue.id, "court": self.court.id, "sport": self.sport.id, "date": self.day.isoformat(),
                 "start_hour": 19, "duration": 1, "capacity": 4, "payment_rule": "split",
                 "booking_mode": "crowdfund", "is_public": True,
@@ -47,7 +47,18 @@ class MatchTestCase(TestCase):
         body.update(extra)
         r = self.api(self.host).post("/api/v1/lobbies/", body, format="json")
         self.assertEqual(r.status_code, 201, r.data)
+        self.assertNotIn("checkout_booking", r.data)  # creating a match never jumps to payment
+        if accept_friend and any(f.get("tag") != "guest" for f in body.get("friends") or []):
+            a = self.api(self.friend).post(f"/api/v1/lobbies/{r.data['id']}/accept-invite/")
+            self.assertEqual(a.status_code, 200, a.data)
         return r.data
+
+    def lock(self, lb):
+        """Host taps “Lock turf” in the Match Room → a held booking to pay."""
+        r = self.api(self.host).post(f"/api/v1/lobbies/{lb['id']}/lock/")
+        self.assertEqual(r.status_code, 200, r.data)
+        lb["checkout_booking"] = r.data["checkout_booking"]
+        return lb
 
     def screen_in(self, lobby_id, user):
         r = self.api(user).post(f"/api/v1/lobbies/{lobby_id}/request/", {"message": "Can I play?"}, format="json")
@@ -168,7 +179,7 @@ class ScreeningTests(MatchTestCase):
         self.assertEqual(LobbyMember.objects.get(lobby_id=lb["id"], user=self.solo).status, "removed")
 
     def test_host_covers_all_confirms_joiners_free(self):
-        lb = self.create(payment_rule="host")
+        lb = self.lock(self.create(payment_rule="host"))
         self.assertEqual(lb["status"], "draft")
         r = self.api(self.host).post(f"/api/v1/bookings/{lb['checkout_booking']['id']}/pay/", {"method": "upi"})
         self.assertEqual(r.status_code, 200, r.data)
@@ -181,6 +192,7 @@ class BookAndRecoverTests(MatchTestCase):
     def locked(self):
         lb = self.create(booking_mode="book_recover")
         self.assertEqual(lb["status"], "draft")
+        self.lock(lb)
         r = self.api(self.host).post(f"/api/v1/bookings/{lb['checkout_booking']['id']}/pay/", {"method": "upi"})
         self.assertEqual(r.status_code, 200, r.data)
         self.assertEqual(r.data["lobby"]["status"], "locked")
@@ -333,3 +345,52 @@ class DiscoveryTests(MatchTestCase):
         self.create()
         r = self.client.get("/api/v1/venues/", {"area": self.area.id}).data
         self.assertEqual(r["items"][0]["open_lobbies"], 1)
+
+
+class InviteAndLockTests(MatchTestCase):
+    def slot_status(self, hour=19):
+        slots = self.client.get(f"/api/v1/venues/{self.venue.id}/availability/",
+                                {"date": self.day, "sport": self.sport.id, "court": self.court.id}).data["slots"]
+        return next(x for x in slots if x["hour"] == hour)["status"]
+
+    def test_known_friend_is_invited_not_added(self):
+        lb = self.create(accept_friend=False)
+        m = LobbyMember.objects.get(lobby_id=lb["id"], user=self.friend)
+        self.assertEqual(m.status, "invited")
+        self.assertEqual(lb["spots_left"], 1)  # host + invited friend + guest hold 3 of 4
+        # an invited friend sees the card with Accept / Decline, never the private chat
+        card = self.api(self.friend).get(f"/api/v1/lobbies/{lb['id']}/").data
+        self.assertEqual(card["my_role"], "invited")
+        self.assertNotIn("members", card)
+        self.assertEqual(self.api(self.friend).get(f"/api/v1/lobbies/{lb['id']}/messages/").status_code, 400)
+        self.assertEqual([x["id"] for x in self.api(self.friend).get("/api/v1/lobbies/mine/").data["requests"]],
+                         [lb["id"]])
+        r = self.api(self.friend).post(f"/api/v1/lobbies/{lb['id']}/accept-invite/")
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["me"]["status"], "pending")
+        self.assertTrue(r.data["me"]["can_pay"])  # crowdfunding → pay share now
+
+    def test_declined_invite_frees_the_spot(self):
+        lb = self.create(accept_friend=False)
+        r = self.api(self.friend).post(f"/api/v1/lobbies/{lb['id']}/decline-invite/")
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["spots_left"], 2)
+        self.assertEqual(self.api(self.friend).post(f"/api/v1/lobbies/{lb['id']}/accept-invite/").status_code, 400)
+
+    def test_book_recover_does_not_hold_slot_until_host_locks(self):
+        lb = self.create(booking_mode="book_recover")
+        self.assertEqual(self.slot_status(), "free")
+        self.assertTrue(lb["host_actions"]["can_lock"])
+        self.lock(lb)
+        self.assertNotEqual(self.slot_status(), "free")
+        # the unpaid hold lapses → the match stays, the slot frees up, and the host can lock again
+        hold = Booking.objects.get(pk=lb["checkout_booking"]["id"])
+        Booking.objects.filter(pk=hold.pk).update(held_until=timezone.now() - timedelta(minutes=1))
+        data = self.api(self.host).get(f"/api/v1/lobbies/{lb['id']}/").data
+        self.assertEqual((data["status"], data["held_booking"]), ("draft", None))
+        self.assertEqual(self.slot_status(), "free")
+        self.lock(lb)
+
+    def test_only_host_can_lock(self):
+        lb = self.create(booking_mode="book_recover")
+        self.assertEqual(self.api(self.friend).post(f"/api/v1/lobbies/{lb['id']}/lock/").status_code, 400)

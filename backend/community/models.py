@@ -108,7 +108,7 @@ class Lobby(TimeStamped):
 
     @property
     def taken(self):
-        return self.active_members().count()
+        return self.members.filter(status__in=LobbyMember.HOLDS_SPOT).count()
 
     @property
     def spots_left(self):
@@ -125,8 +125,10 @@ class Lobby(TimeStamped):
 
 class LobbyMember(TimeStamped):
     TAGS = [("host", "Host"), ("known", "Known"), ("guest", "Guest"), ("solo", "Solo")]
-    STATUS = [("pending", "Payment pending"), ("confirmed", "Confirmed"), ("left", "Left"),
-              ("removed", "Removed"), ("refunded", "Refunded")]
+    STATUS = [("invited", "Invited"), ("declined", "Declined invite"), ("pending", "Payment pending"),
+              ("confirmed", "Confirmed"), ("left", "Left"), ("removed", "Removed"), ("refunded", "Refunded")]
+    # statuses that keep a spot reserved: an invited friend's spot isn't offered to solo players
+    HOLDS_SPOT = ("invited", "pending", "confirmed")
     ESCROW = [("none", "Nothing paid"), ("held", "Held"), ("released", "Released to host"),
               ("settled", "Settled to venue"), ("refunded", "Refunded"), ("forfeited", "Kept (late drop-off)")]
 

@@ -117,8 +117,8 @@ class _MyMatchesViewState extends State<_MyMatchesView> {
   Widget _empty(BuildContext context) => switch (tab) {
     1 => const EmptyNote(
       icon: LucideIcons.messagesSquare,
-      title: 'No pending requests',
-      body: 'Ask to join an open lobby and your private chat with the host shows up here.',
+      title: 'No invites or requests',
+      body: 'Friends\' invites to their matches, and your requests to join open lobbies, show up here.',
     ),
     2 => const EmptyNote(icon: LucideIcons.history, title: 'No past matches', body: 'Matches you played show up here.'),
     _ => EmptyNote(
@@ -143,6 +143,7 @@ class _MatchTile extends StatelessWidget {
       'host' => ('Hosting', C.mint, C.green700),
       'member' => ('Playing', C.blueSoft, C.blue),
       'requested' => ('Requested', C.amberSoft, C.amber),
+      'invited' => ('Invited you', C.coralSoft, C.orangeInk),
       _ => ('', C.chip, C.muted),
     };
     final alert = role == 'host' && (g['alert'] ?? '').toString().isNotEmpty;

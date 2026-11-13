@@ -11,7 +11,7 @@ from bookings.services import fmt_hour
 from venues.models import Area, City, Venue
 
 from . import services
-from .models import JoinRequest, Lobby, LobbyMessage
+from .models import JoinRequest, Lobby, LobbyMember, LobbyMessage
 
 Auth = permissions.IsAuthenticated
 
@@ -38,6 +38,7 @@ def slot_state(lobby):
 def lobby_card(lobby, me):
     members = list(lobby.members.select_related("user"))
     active = [m for m in members if m.status in ("pending", "confirmed")]
+    holding = [m for m in members if m.status in LobbyMember.HOLDS_SPOT]  # invited friends keep their spot
     mine = next((m for m in members if m.user_id and me.is_authenticated and m.user_id == me.id), None)
     req = None
     if me.is_authenticated and not (mine and mine.status in ("pending", "confirmed")):
@@ -46,6 +47,8 @@ def lobby_card(lobby, me):
         role = "host"
     elif mine and mine.status in ("pending", "confirmed"):
         role = "member"
+    elif mine and mine.status == "invited":
+        role = "invited"
     elif req:
         role = {"pending": "requested", "declined": "declined"}.get(req.status)
     else:
@@ -65,8 +68,8 @@ def lobby_card(lobby, me):
         "starts_at": lobby.start_dt.isoformat(),
         "ends_at": lobby.end_dt.isoformat(),
         "capacity": lobby.capacity,
-        "taken": len(active),
-        "spots_left": max(0, lobby.capacity - len(active)),
+        "taken": len(holding),
+        "spots_left": max(0, lobby.capacity - len(holding)),
         "paid_count": sum(1 for m in active if m.status == "confirmed"),
         "turf_price": lobby.turf_price,
         "share": lobby.share if lobby.is_split else 0,
@@ -83,6 +86,7 @@ def lobby_card(lobby, me):
         "avatars": [_initials(m.user) if m.user_id else (m.guest_name[:1].upper() or "G") for m in active[:5]],
         "my_role": role,
         "my_request_id": req.id if req else None,
+        "invited_by": person(lobby.host, me) if role == "invited" else None,
     }
 
 
@@ -112,7 +116,7 @@ def lobby_detail(request, lobby):
     now = timezone.now()
     mine = services.membership(lobby, me)
     is_host = lobby.host_id == me.id
-    members = lobby.members.filter(status__in=("pending", "confirmed")).select_related("user")
+    members = lobby.members.filter(status__in=LobbyMember.HOLDS_SPOT).select_related("user")
     b = lobby.booking
     data.update({
         "members": [member_payload(m, me, lobby) for m in members],
@@ -143,7 +147,9 @@ def lobby_detail(request, lobby):
         },
         "host_actions": {
             "pay_balance": max(0, lobby.turf_price - lobby.pooled()) if lobby.status == "crowdfunding" else None,
-            "can_switch": lobby.status == "crowdfunding",
+            "can_switch": lobby.status == "crowdfunding" or (lobby.status == "draft" and b is None),
+            "can_lock": lobby.status == "draft",
+            "lock_amount": lobby.turf_price if lobby.status == "draft" else None,
             "can_unpublish": lobby.is_public and lobby.is_live,
             "can_cancel": lobby.is_live,
         } if is_host else None,
@@ -263,9 +269,12 @@ def my_lobbies(request):
     past = qs.exclude(status__in=services.LIVE).order_by("-date", "-start_hour")[:20]
     reqs = (JoinRequest.objects.filter(user=me, status="pending", lobby__status__in=services.LIVE)
             .select_related("lobby__venue__area", "lobby__court", "lobby__sport", "lobby__host"))
+    invites = (Lobby.objects.filter(members__user=me, members__status="invited", status__in=services.LIVE)
+               .distinct().select_related("venue__area", "court", "sport", "host"))
     return Response({
         "upcoming": [lobby_card(lb, me) for lb in live.order_by("date", "start_hour")],
-        "requests": [lobby_card(r.lobby, me) for r in reqs],
+        # invites from friends first, then my requests to join other groups
+        "requests": [lobby_card(lb, me) for lb in invites] + [lobby_card(r.lobby, me) for r in reqs],
         "past": [lobby_card(lb, me) for lb in past],
     })
 
@@ -385,11 +394,24 @@ def lobby_pay(request, pk):
 @api_view(["POST"])
 @permission_classes([Auth])
 def lobby_action(request, pk, action):
-    """Host: pay-balance, switch-slot, unpublish, cancel. Player: leave, checkin, report."""
+    """Host: lock, pay-balance, switch-slot, unpublish, cancel. Player: accept-invite, decline-invite, leave, checkin, report."""
     lobby = _lobby(pk)
     d, me = request.data, request.user
     message = ""
-    if action == "pay-balance":
+    if action == "lock":
+        from bookings.api import booking_payload
+        booking = services.lock_turf(lobby, me)
+        data = lobby_detail(request, _lobby(pk))
+        data["checkout_booking"] = booking_payload(request, booking)
+        data["message"] = "Slot held — finish paying to lock the turf."
+        return Response(data)
+    if action == "accept-invite":
+        services.accept_invite(lobby, me)
+        message = "You're in! Welcome to the Match Room."
+    elif action == "decline-invite":
+        services.decline_invite(lobby, me)
+        message = "Invite declined."
+    elif action == "pay-balance":
         services.pay_balance(lobby, me, d.get("method", "upi"), d.get("upi_id", ""))
         message = "Balance paid — the turf is locked."
     elif action == "switch-slot":

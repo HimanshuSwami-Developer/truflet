@@ -38,7 +38,6 @@ extension AppNavigation on BuildContext {
   // ------------------------------------------------------------ replace the current screen
   Future<void> replaceWithBookingConfirmed(Json booking) => _replace(AppRoutes.bookingConfirmed, extra: booking);
   Future<void> replaceWithTicket(int bookingId) => _replace(AppRoutes.ticketOf(bookingId));
-  Future<void> replaceWithPayment(Json booking) => _replace(AppRoutes.payment, extra: booking);
   Future<void> replaceWithMatch(int lobbyId) => _replace(AppRoutes.matchOf(lobbyId));
   Future<void> replaceWithRequestThread(int lobbyId, int requestId) => _replace(AppRoutes.requestOf(lobbyId, requestId));
 
