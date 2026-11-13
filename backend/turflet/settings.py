@@ -19,6 +19,8 @@ def env_bool(name, default=False):
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-change-me-this-key-is-only-for-local-development")
 DEBUG = env_bool("DEBUG", True)
+# Behind Vercel's proxy: trust its X-Forwarded-Proto so absolute links (privacy page, images) use https.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
 

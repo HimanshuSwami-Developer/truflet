@@ -62,6 +62,7 @@ def app_config(request):
             "enabled": c.offer_enabled, "tag": c.offer_tag, "title": c.offer_title,
             "subtitle": c.offer_subtitle, "image": image_url(request, c.offer_image),
         },
+        "privacy_url": request.build_absolute_uri("/privacy/"),
         "support": {
             "phone": c.support_phone, "email": c.support_email, "whatsapp": c.support_whatsapp,
             "chat_hours": c.chat_hours, "call_hours": c.call_hours, "email_sla": c.email_sla,

@@ -9,6 +9,7 @@ from accounts import api as accounts
 from bookings import api as bookings
 from community import api as community
 from core import api as core
+from core import views as core_pages
 from venues import api as venues
 
 api = [
@@ -66,6 +67,8 @@ api = [
 urlpatterns = [
     path("", lambda r: redirect("dashboard:home")),
     path("api/v1/", include(api)),
+    path("privacy/", core_pages.privacy_policy, name="privacy"),
+    path("privacy-policy/", core_pages.privacy_policy),
     path("admin-panel/", include("dashboard.urls")),
     path("django-admin/", admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

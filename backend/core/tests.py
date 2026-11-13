@@ -45,3 +45,13 @@ class DeviceTokenTests(TestCase):
         with mock.patch.object(push, "_load", return_value=None), mock.patch.object(push.requests, "post") as post:
             push.send_push(notify(self.a, "Hi"))
         post.assert_not_called()
+
+
+class PrivacyPageTests(TestCase):
+    def test_public_privacy_page_and_config_link(self):
+        r = self.client.get("/privacy/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Privacy Policy")
+        self.assertContains(r, "Deleting your account")
+        self.assertNotContains(r, "+918000000000")
+        self.assertTrue(self.client.get("/api/v1/config/").json()["privacy_url"].endswith("/privacy/"))

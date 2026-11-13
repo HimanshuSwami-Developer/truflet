@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/app_navigation.dart';
 import '../../../app/session/app_cubit.dart';
@@ -243,10 +244,12 @@ class _PolicyViewState extends State<_PolicyView> {
                   style: t(13, c: const Color(0xFF164E63), h: 1.5),
                   children: [
                     TextSpan(
-                      text: 'No account, minimal data. ',
+                      text: 'We never sell your data. ',
                       style: t(13, w: FontWeight.w700, c: const Color(0xFF164E63)),
                     ),
-                    const TextSpan(text: "We only collect what's needed to confirm your booking and let the venue check you in."),
+                    const TextSpan(
+                      text: 'We use it to run your bookings and matches, and share only what venues and your squad need.',
+                    ),
                   ],
                 ),
               ),
@@ -276,6 +279,16 @@ class _PolicyViewState extends State<_PolicyView> {
                 ),
               ),
           ],
+        ),
+      ),
+    if (privacy && context.read<AppCubit>().state.config['privacy_url'] != null)
+      GhostButton(
+        'Read the full privacy policy',
+        icon: LucideIcons.externalLink,
+        height: 48,
+        onTap: () => launchUrl(
+          Uri.parse(context.read<AppCubit>().state.config['privacy_url']),
+          mode: LaunchMode.externalApplication,
         ),
       ),
   ];

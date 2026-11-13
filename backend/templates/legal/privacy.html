@@ -1,0 +1,169 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy · Turflet</title>
+<meta name="description" content="How the Turflet app collects, uses and shares your data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+  :root { --brand:#143D2B; --ink:#0C2419; --muted:#5B6B63; --coral:#F2552C; --ground:#F7F5EF; --card:#fff; --line:#E6E2D8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#EEF3EF; --muted:#A7B5AD; --ground:#0E1A14; --card:#15241C; --line:#24372C; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink); font:16px/1.65 "Plus Jakarta Sans",system-ui,sans-serif; }
+  header { background:#143D2B; color:#fff; padding:40px 16px 72px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:20px; letter-spacing:-.4px; }
+  .brand i { width:10px; height:10px; border-radius:50%; background:var(--coral); display:inline-block; margin-top:-14px; }
+  h1 { font-size:34px; line-height:1.15; letter-spacing:-1px; margin:22px 0 6px; }
+  header p { margin:0; opacity:.8; }
+  main { padding:0 16px 48px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px; margin-top:-44px; }
+  h2 { font-size:20px; letter-spacing:-.4px; margin:32px 0 8px; }
+  h2:first-child { margin-top:0; }
+  h3 { font-size:16px; margin:18px 0 4px; }
+  p, li { color:var(--ink); }
+  ul { padding-left:20px; margin:6px 0; }
+  li { margin:4px 0; }
+  .muted { color:var(--muted); font-size:14px; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:14px; }
+  th, td { text-align:left; vertical-align:top; padding:10px 8px; border-bottom:1px solid var(--line); }
+  th { font-weight:600; }
+  .tablewrap { overflow-x:auto; }
+  a { color:var(--coral); }
+  nav.toc { columns:2; font-size:14px; margin:8px 0 0; }
+  nav.toc a { color:var(--muted); text-decoration:none; display:block; padding:2px 0; }
+  @media (max-width:560px) { nav.toc { columns:1; } .card { padding:20px; } h1 { font-size:28px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">Turflet <i></i></div>
+    <h1>Privacy Policy</h1>
+    <p>Last updated {{ updated|date:"j F Y" }}</p>
+  </div>
+</header>
+<main>
+<div class="wrap card">
+  <p>This policy explains what personal data the <strong>Turflet</strong> mobile app and its services (“Turflet”, “we”, “us”) collect, why we collect it, who we share it with and the choices you have. Turflet lets you discover sports venues, book turf and court slots, organise or join matches with other players, chat with your squad and split payments.</p>
+  <p>By using Turflet you agree to this policy. If you do not agree, please do not use the app.</p>
+
+  <nav class="toc">
+    <a href="#collect">1. Data we collect</a>
+    <a href="#use">2. How we use your data</a>
+    <a href="#visible">3. What other users can see</a>
+    <a href="#share">4. Who we share data with</a>
+    <a href="#permissions">5. Device permissions</a>
+    <a href="#retention">6. How long we keep data</a>
+    <a href="#rights">7. Your choices and rights</a>
+    <a href="#delete">8. Deleting your account</a>
+    <a href="#security">9. Security</a>
+    <a href="#children">10. Children</a>
+    <a href="#changes">11. Changes to this policy</a>
+    <a href="#contact">12. Contact us</a>
+  </nav>
+
+  <h2 id="collect">1. Data we collect</h2>
+  <h3>Information you give us</h3>
+  <ul>
+    <li><strong>Account:</strong> your email address, used to sign in with a one-time code and to send booking confirmations.</li>
+    <li><strong>Profile:</strong> your name, and if you choose to add them, your mobile number, address, a public handle, the sports you play and your skill level in each.</li>
+    <li><strong>Bookings and payments:</strong> the venues, courts and slots you book, amounts paid, refunds, coupons, wallet balance and referral codes. Card, UPI and bank details are entered with our payment partner; Turflet does not store them.</li>
+    <li><strong>Matches and chat:</strong> matches you create or join, invitations, join requests, the short note you send with a request, and messages you post in match or request chats.</li>
+    <li><strong>Reviews and support:</strong> ratings you give venues and messages you send to our support team.</li>
+  </ul>
+  <h3>Information collected automatically</h3>
+  <ul>
+    <li><strong>Location:</strong> if you allow it, your device’s location is used to find your city and show nearby venues and matches. We save your city/area and the coordinates you were at when you set it on your profile. You can pick a city by hand instead.</li>
+    <li><strong>Push notification token:</strong> an identifier issued by Google Firebase Cloud Messaging so we can send notifications to your device, together with the device platform (for example “android”).</li>
+    <li><strong>Activity:</strong> check-ins at venues and attendance at matches, used to show a player’s reliability to hosts.</li>
+    <li><strong>Technical data:</strong> our servers record standard request information such as IP address, time of request and error details, used for security and to fix problems.</li>
+  </ul>
+  <p class="muted">We do not use advertising identifiers, show third-party ads, or collect your contacts, photos, camera, microphone or files.</p>
+
+  <h2 id="use">2. How we use your data</h2>
+  <ul>
+    <li>To create and secure your account and sign you in.</li>
+    <li>To book, reschedule, cancel and refund slots, and to produce the QR ticket the venue scans at check-in.</li>
+    <li>To run matches: invites, join requests, host approvals, squad chat, cost splitting, payment reminders and payouts to hosts.</li>
+    <li>To show venues, matches and players near you.</li>
+    <li>To send in-app and push notifications about your bookings, matches, invites, payments and refunds.</li>
+    <li>To provide customer support and resolve disputes.</li>
+    <li>To prevent fraud and abuse, keep the service secure and meet legal, tax and accounting obligations.</li>
+    <li>To understand and improve how the app works.</li>
+  </ul>
+  <p>We process your data to provide the service you asked for, with your consent (for example location and notifications), to meet legal obligations, and for our legitimate interest in keeping Turflet safe and working.</p>
+
+  <h2 id="visible">3. What other users can see</h2>
+  <ul>
+    <li><strong>In public matches:</strong> your first name, initials, and the match you are hosting, including its venue and time, are shown to players browsing matches.</li>
+    <li><strong>To a host when you ask to join:</strong> your name, handle, sports and levels, reliability and the note you send.</li>
+    <li><strong>To players in the same match:</strong> your name, initials, payment status for your share, and the messages you post in that match’s chat.</li>
+    <li><strong>Nearby players:</strong> if “show me to nearby players” is on in your profile, players searching to invite friends can find you by name or handle. You can turn this off.</li>
+  </ul>
+  <p>Your email address, mobile number and address are not shown to other players.</p>
+
+  <h2 id="share">4. Who we share data with</h2>
+  <p>We <strong>do not sell</strong> your personal data. We share it only as follows:</p>
+  <div class="tablewrap"><table>
+    <tr><th>Who</th><th>What</th><th>Why</th></tr>
+    <tr><td>Venues you book</td><td>Your name, contact number (if added), booking and check-in details</td><td>To honour your booking and check you in</td></tr>
+    <tr><td>Other players</td><td>As described in section 3</td><td>To organise and play matches</td></tr>
+    <tr><td>Payment partner</td><td>Amount, booking reference, and payment details you enter with them</td><td>To process payments, split payments and refunds</td></tr>
+    <tr><td>Cloud hosting and database providers</td><td>All app data, stored on our behalf</td><td>To run the service</td></tr>
+    <tr><td>Google Firebase Cloud Messaging</td><td>Push token, notification title and text</td><td>To deliver push notifications</td></tr>
+    <tr><td>Email delivery provider</td><td>Email address, sign-in codes and booking emails</td><td>To send sign-in codes and confirmations</td></tr>
+    <tr><td>Image hosting provider</td><td>Venue and sport images (not your personal data)</td><td>To show pictures in the app</td></tr>
+    <tr><td>Authorities</td><td>Data required by law</td><td>When required by law, court order, or to protect users’ safety and rights</td></tr>
+  </table></div>
+  <p>Our service providers may only use your data to provide their service to us. Some of them may store data on servers outside your country; we use providers that apply appropriate safeguards. If Turflet is involved in a merger or sale, your data may transfer to the new owner under this policy.</p>
+
+  <h2 id="permissions">5. Device permissions</h2>
+  <ul>
+    <li><strong>Location</strong> (approximate and precise): to find your city and show what is nearby. Optional; you can choose a city by hand.</li>
+    <li><strong>Notifications:</strong> to alert you about bookings, invites and payments. Optional.</li>
+    <li><strong>Internet:</strong> required for the app to work.</li>
+  </ul>
+  <p>You can change permissions at any time in your phone’s settings.</p>
+
+  <h2 id="retention">6. How long we keep data</h2>
+  <ul>
+    <li>Account and profile data: while your account is active, and deleted when you delete your account.</li>
+    <li>Booking, payment and refund records: kept for as long as tax and accounting laws require, even after account deletion.</li>
+    <li>Match chats and requests: kept while the match is relevant to its players, then removed or anonymised along with your account.</li>
+    <li>Sign-in codes expire within minutes. Push tokens are removed when you sign out or uninstall the app.</li>
+    <li>Server logs: kept for a short period for security and debugging.</li>
+  </ul>
+
+  <h2 id="rights">7. Your choices and rights</h2>
+  <ul>
+    <li><strong>Access and correct:</strong> view and edit your name, mobile, address, handle and sports in the Profile tab.</li>
+    <li><strong>Notifications:</strong> switch booking and match notifications off in the Profile tab or in phone settings.</li>
+    <li><strong>Visibility:</strong> turn off “show me to nearby players”.</li>
+    <li><strong>Location:</strong> deny or revoke location permission and pick your city by hand.</li>
+    <li><strong>Copy, deletion, withdrawal of consent, or a complaint:</strong> email us at the address below. Under applicable law, including India’s Digital Personal Data Protection Act, 2023, you may also nominate someone to exercise your rights and raise a grievance with us or the relevant authority.</li>
+  </ul>
+
+  <h2 id="delete">8. Deleting your account</h2>
+  <p>To delete your account and personal data, email <a href="mailto:{{ email }}?subject=Delete%20my%20Turflet%20account">{{ email }}</a> from the email address you sign in with, with the subject “Delete my Turflet account”. We will confirm and delete your account within 30 days. Records we must keep by law (such as payment and tax records) are retained only for that purpose, and your chat messages are anonymised.</p>
+
+  <h2 id="security">9. Security</h2>
+  <p>Data is encrypted in transit using HTTPS. Access to personal data is limited to people and systems that need it. Sign-in uses one-time codes rather than passwords, and sessions use short-lived tokens. No system is perfectly secure, so please contact us immediately if you suspect misuse of your account.</p>
+
+  <h2 id="children">10. Children</h2>
+  <p>Turflet is intended for users aged 18 and over. Players under 18 may only use Turflet with the consent and supervision of a parent or guardian. We do not knowingly collect data from children without such consent; if you believe a child has given us data, contact us and we will delete it.</p>
+
+  <h2 id="changes">11. Changes to this policy</h2>
+  <p>We may update this policy as the app changes. We will change the “last updated” date above and, for significant changes, notify you in the app.</p>
+
+  <h2 id="contact">12. Contact us</h2>
+  <p>Questions, requests or complaints (including our grievance officer):<br>
+  Email: <a href="mailto:{{ email }}">{{ email }}</a>{% if phone %}<br>Phone: {{ phone }}{% endif %}</p>
+</div>
+</main>
+</body>
+</html>
