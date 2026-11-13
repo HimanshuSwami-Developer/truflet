@@ -35,14 +35,13 @@ class LocationState {
   List<Json> get areas => cities.isEmpty ? [] : asList(cities[city]['areas']);
   Json? get area => areas.where((a) => a['id'] == areaId).firstOrNull;
 
-  /// Areas of the selected city, or — while searching — matches across every city
-  /// (tagged with `_city`, and `_live` = whether that city can be picked).
-  List<Json> get filteredAreas => query.isEmpty
-      ? areas
-      : cities
-            .expand((c) => asList(c['areas']).map((a) => {...a, '_city': c['name'], '_live': isLive(c)}))
-            .where((a) => '${a['name']} ${a['pincode']} ${a['_city']}'.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+  /// Indexes of the cities matching the search (all of them when it's empty).
+  List<int> get visibleCities => [
+    for (var i = 0; i < cities.length; i++)
+      if (query.isEmpty || '${cities[i]['name']}'.toLowerCase().contains(query.toLowerCase())) i,
+  ];
+
+  String get cityName => cities.isEmpty ? '' : '${cities[city]['name']}';
 
   static const _keep = Object();
 

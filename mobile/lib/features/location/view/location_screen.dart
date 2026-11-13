@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../app/router/app_navigation.dart';
 import '../../../app/session/app_cubit.dart';
-import '../../../core/network/json.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../data/repositories/location_repository.dart';
@@ -48,8 +47,8 @@ class _LocationView extends StatelessWidget {
   Widget _build(BuildContext context, LocationState st) {
     final cubit = context.read<LocationCubit>();
     final top = MediaQuery.of(context).padding.top;
-    final cities = st.cities, city = st.city, query = st.query, area = st.area;
-    final filteredAreas = st.filteredAreas;
+    final cities = st.cities, query = st.query, area = st.area;
+    final visible = st.visibleCities;
     return Scaffold(
       body: Column(
         children: [
@@ -124,8 +123,8 @@ class _LocationView extends StatelessWidget {
                         ),
                         if (st.error != null) ErrorRetry(st.error!, onRetry: cubit.load),
                         if (st.loading) const CityAreaSkeleton(),
-                        if (cities.isNotEmpty && query.isEmpty) ...[
-                          const Label('Popular cities', padding: EdgeInsets.fromLTRB(0, 22, 0, 12)),
+                        if (cities.isNotEmpty) ...[
+                          Label(query.isEmpty ? 'Cities' : 'Matching cities', padding: const EdgeInsets.fromLTRB(0, 22, 0, 12)),
                           GridView.count(
                             crossAxisCount: 3,
                             shrinkWrap: true,
@@ -133,33 +132,13 @@ class _LocationView extends StatelessWidget {
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10,
                             childAspectRatio: 1.25,
-                            children: [for (var i = 0; i < cities.length; i++) _cityTile(cubit, st, i)],
+                            children: [for (final i in visible) _cityTile(cubit, st, i)],
                           ),
-                        ],
-                        if (!st.loading) ...[
-                          Label(
-                            query.isEmpty ? 'Areas in ${cities.isEmpty ? '' : cities[city]['name']}' : 'Matching areas',
-                            padding: const EdgeInsets.fromLTRB(0, 24, 0, 6),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: C.line),
+                          if (visible.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Text('No cities match "$query"', style: t(14, c: C.muted)),
                             ),
-                            child: Column(
-                              children: [
-                                for (var i = 0; i < filteredAreas.length; i++)
-                                  _areaRow(context, st, filteredAreas[i], i < filteredAreas.length - 1),
-                                if (filteredAreas.isEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Text('No areas match "$query"', style: t(14, c: C.muted)),
-                                  ),
-                              ],
-                            ),
-                          ),
                         ],
                       ],
                     ),
@@ -174,7 +153,10 @@ class _LocationView extends StatelessWidget {
               color: Colors.white,
               border: Border(top: BorderSide(color: C.line)),
             ),
-            child: PrimaryButton('Show turfs in ${area?['name'] ?? '…'}', onTap: area == null ? null : () => _continue(context)),
+            child: PrimaryButton(
+              'Show turfs in ${area == null ? '…' : st.cityName}',
+              onTap: area == null ? null : () => _continue(context),
+            ),
           ),
         ],
       ),
@@ -200,7 +182,7 @@ class _LocationView extends StatelessWidget {
             style: t(15),
             decoration: InputDecoration(
               border: InputBorder.none,
-              hintText: 'Search area, locality or pincode',
+              hintText: 'Search city',
               hintStyle: t(15, c: C.muted),
               isDense: true,
             ),
@@ -247,43 +229,6 @@ class _LocationView extends StatelessWidget {
                 ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _areaRow(BuildContext context, LocationState st, Json a, bool border) {
-    final on = a['id'] == st.areaId;
-    final live = a['_live'] != false;
-    return InkWell(
-      onTap: live
-          ? () {
-              context.read<LocationCubit>().selectArea(a);
-              FocusScope.of(context).unfocus();
-            }
-          : null,
-      child: Container(
-        height: 54,
-        decoration: border
-            ? const BoxDecoration(
-                border: Border(bottom: BorderSide(color: C.divider)),
-              )
-            : null,
-        child: Row(
-          children: [
-            const Icon(LucideIcons.mapPin, size: 18, color: C.muted),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                a['_city'] != null ? '${a['name']}, ${a['_city']}' : a['name'],
-                style: t(15, c: live ? C.ink : C.muted),
-              ),
-            ),
-            live
-                ? Text('${a['venue_count']} venues', style: t(12, c: C.muted))
-                : const Pill('Coming soon', bg: C.chip, fg: C.muted, padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2)),
-            if (on) ...[const SizedBox(width: 12), const Icon(LucideIcons.check, size: 20, color: C.brand)],
-          ],
         ),
       ),
     );

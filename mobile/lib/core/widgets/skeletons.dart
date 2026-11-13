@@ -272,7 +272,7 @@ class SlotGridSkeleton extends StatelessWidget {
   );
 }
 
-/// Location picker: "Popular cities" grid and the areas list.
+/// Location picker: the cities grid.
 class CityAreaSkeleton extends StatelessWidget {
   const CityAreaSkeleton({super.key});
 
@@ -292,38 +292,6 @@ class CityAreaSkeleton extends StatelessWidget {
           mainAxisSpacing: 10,
           childAspectRatio: 1.25,
           children: [for (var i = 0; i < 6; i++) _box(null, double.infinity, 18)],
-        ),
-        const SizedBox(height: 24),
-        _text(3, 13),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: C.line),
-          ),
-          child: Column(
-            children: [
-              for (var i = 0; i < 5; i++)
-                Container(
-                  height: 54,
-                  decoration: i < 4
-                      ? const BoxDecoration(
-                          border: Border(bottom: BorderSide(color: C.divider)),
-                        )
-                      : null,
-                  child: Row(
-                    children: [
-                      _box(18, 18, 6),
-                      const SizedBox(width: 12),
-                      Expanded(child: _text(2, 15)),
-                      _text(2, 12),
-                    ],
-                  ),
-                ),
-            ],
-          ),
         ),
       ],
     ),

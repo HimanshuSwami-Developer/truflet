@@ -110,7 +110,7 @@ class _ProfileViewState extends State<_ProfileView> {
     final top = MediaQuery.of(context).padding.top;
     final stats = asMap(u['stats']);
     final sports = asList(u['sports']);
-    final area = u['home_area'] == null ? s.areaName : u['home_area']['name'];
+    final area = u['home_area'] == null ? (s.cityName.isNotEmpty ? s.cityName : s.areaName) : u['home_area']['city'];
     return RefreshIndicator(
       color: C.brand,
       onRefresh: app.refreshMe,

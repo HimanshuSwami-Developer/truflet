@@ -7,7 +7,8 @@ import '../../../core/network/json.dart';
 import '../../../data/repositories/location_repository.dart';
 import 'location_state.dart';
 
-/// 3 · Choose location: city grid, area list, search and "use my location".
+/// 3 · Choose location: city grid, city search and "use my location". Players only pick a city; the
+/// session still keeps one of its areas (the nearest by GPS, else the first) as the map point for distances.
 class LocationCubit extends Cubit<LocationState> {
   final LocationRepository _repo;
   final AppCubit _app;
@@ -49,7 +50,7 @@ class LocationCubit extends Cubit<LocationState> {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        throw ApiError('Location permission is off. Pick your area below.');
+        throw ApiError('Location permission is off. Pick your city below.');
       }
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
@@ -62,7 +63,7 @@ class LocationCubit extends Cubit<LocationState> {
           areaId: r['area_id'],
           lat: pos.latitude,
           lng: pos.longitude,
-          gpsLabel: 'Located: ${r['area']}, ${r['city']}',
+          gpsLabel: 'Located: ${r['city']}',
         ),
       );
       return null;
@@ -77,20 +78,9 @@ class LocationCubit extends Cubit<LocationState> {
 
   void selectCity(int i) {
     if (!LocationState.isLive(state.cities[i])) return;
+    if (i == state.city && state.areaId != null) return; // keep a GPS-picked area in the same city
     final a = asList(state.cities[i]['areas']);
-    _emit(state.copyWith(city: i, areaId: a.isNotEmpty ? a.first['id'] : null, gpsLabel: null));
-  }
-
-  /// Picking a search result also switches to that area's city and clears the search.
-  void selectArea(Json a) {
-    if (a['_live'] == false) return;
-    _emit(
-      state.copyWith(
-        areaId: a['id'],
-        city: a['_city'] != null ? state.cities.indexWhere((c) => c['name'] == a['_city']) : null,
-        query: '',
-      ),
-    );
+    _emit(state.copyWith(city: i, areaId: a.isNotEmpty ? a.first['id'] : null, gpsLabel: null, lat: null, lng: null));
   }
 
   /// Saves the chosen area for the session. Returns false when nothing is selected.
@@ -99,8 +89,8 @@ class LocationCubit extends Cubit<LocationState> {
     if (a == null || !LocationState.isLive(state.cities[state.city])) return false;
     await _app.setArea(
       id: a['id'],
-      area: a['name'],
-      city: state.cities[state.city]['name'],
+      area: state.cityName,
+      city: state.cityName,
       lat: state.lat ?? a['lat']?.toDouble(),
       lng: state.lng ?? a['lng']?.toDouble(),
     );

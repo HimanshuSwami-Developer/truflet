@@ -230,7 +230,7 @@ class _ExploreView extends StatelessWidget {
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                '${s.areaName}${s.cityName.isNotEmpty ? ', ${s.cityName}' : ''}',
+                                s.cityName.isNotEmpty ? s.cityName : s.areaName,
                                 overflow: TextOverflow.ellipsis,
                                 style: t(16, w: FontWeight.w700),
                               ),
