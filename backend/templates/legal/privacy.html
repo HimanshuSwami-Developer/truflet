@@ -149,7 +149,7 @@
   </ul>
 
   <h2 id="delete">8. Deleting your account</h2>
-  <p>To delete your account and personal data, email <a href="mailto:{{ email }}?subject=Delete%20my%20Turflet%20account">{{ email }}</a> from the email address you sign in with, with the subject “Delete my Turflet account”. We will confirm and delete your account within 30 days. Records we must keep by law (such as payment and tax records) are retained only for that purpose, and your chat messages are anonymised.</p>
+  <p>To delete your account and personal data, submit a request at <a href="{% url 'delete_account' %}">our account deletion page</a>, or email <a href="mailto:{{ email }}?subject=Delete%20my%20Turflet%20account">{{ email }}</a> from the email address you sign in with, with the subject “Delete my Turflet account”. We will confirm and delete your account within 30 days. Records we must keep by law (such as payment and tax records) are retained only for that purpose, and your chat messages are anonymised.</p>
 
   <h2 id="security">9. Security</h2>
   <p>Data is encrypted in transit using HTTPS. Access to personal data is limited to people and systems that need it. Sign-in uses one-time codes rather than passwords, and sessions use short-lived tokens. No system is perfectly secure, so please contact us immediately if you suspect misuse of your account.</p>

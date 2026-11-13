@@ -69,6 +69,7 @@ urlpatterns = [
     path("api/v1/", include(api)),
     path("privacy/", core_pages.privacy_policy, name="privacy"),
     path("privacy-policy/", core_pages.privacy_policy),
+    path("delete-account/", core_pages.delete_account, name="delete_account"),
     path("admin-panel/", include("dashboard.urls")),
     path("django-admin/", admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

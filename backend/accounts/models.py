@@ -160,3 +160,22 @@ class EmailOTP(models.Model):
 
     def is_expired(self):
         return (timezone.now() - self.created_at).total_seconds() > self.TTL_SECONDS
+
+
+class AccountDeletionRequest(models.Model):
+    """A verified request, sent from the public /delete-account/ page, to delete an account and its data."""
+    STATUS = [("pending", "Pending"), ("completed", "Completed"), ("rejected", "Rejected")]
+    email = models.EmailField(db_index=True)
+    user = models.ForeignKey("accounts.User", null=True, blank=True, on_delete=models.SET_NULL,
+                             related_name="deletion_requests")
+    reason = models.TextField(blank=True)
+    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    note = models.TextField(blank=True, help_text="Internal note")
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.email} · {self.get_status_display()}"

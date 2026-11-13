@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete your account · Turflet</title>
+<meta name="description" content="Request deletion of your Turflet account and personal data.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+  :root { --brand:#143D2B; --ink:#0C2419; --muted:#5B6B63; --coral:#F2552C; --ground:#F7F5EF; --card:#fff; --line:#E6E2D8; --field:#fff; --err:#B42318; --errbg:#FEECEB; --ok:#1E7A4C; --okbg:#E7F5EC; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#EEF3EF; --muted:#A7B5AD; --ground:#0E1A14; --card:#15241C; --line:#24372C; --field:#0E1A14; --err:#FDA29B; --errbg:#3A1714; --ok:#7AD3A0; --okbg:#173325; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink); font:16px/1.65 "Plus Jakarta Sans",system-ui,sans-serif; }
+  header { background:#143D2B; color:#fff; padding:40px 16px 72px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:20px; letter-spacing:-.4px; }
+  .brand i { width:10px; height:10px; border-radius:50%; background:var(--coral); display:inline-block; margin-top:-14px; }
+  h1 { font-size:34px; line-height:1.15; letter-spacing:-1px; margin:22px 0 6px; }
+  header p { margin:0; opacity:.8; }
+  main { padding:0 16px 48px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px; margin-top:-44px; }
+  h2 { font-size:20px; letter-spacing:-.4px; margin:32px 0 8px; }
+  h2:first-child { margin-top:0; }
+  ul, ol { padding-left:20px; margin:6px 0; }
+  li { margin:4px 0; }
+  .muted { color:var(--muted); font-size:14px; }
+  a { color:var(--coral); }
+  form { margin:12px 0 0; }
+  label { display:block; font-weight:600; font-size:14px; margin:14px 0 6px; }
+  input, textarea { width:100%; font:inherit; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  input:focus, textarea:focus { outline:2px solid var(--coral); outline-offset:1px; }
+  textarea { min-height:90px; resize:vertical; }
+  .code { letter-spacing:6px; font-size:20px; font-weight:600; max-width:220px; }
+  button { margin-top:18px; font:inherit; font-weight:600; color:#fff; background:var(--coral); border:0; border-radius:12px; padding:12px 22px; cursor:pointer; }
+  button:hover { filter:brightness(.95); }
+  .alert { border-radius:12px; padding:12px 14px; margin:12px 0; font-size:15px; }
+  .alert.err { background:var(--errbg); color:var(--err); }
+  .alert.ok { background:var(--okbg); color:var(--ok); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:560px) { .card { padding:20px; } h1 { font-size:28px; } .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">Turflet <i></i></div>
+    <h1>Delete your account</h1>
+    <p>Ask us to delete your Turflet account and the personal data linked to it.</p>
+  </div>
+</header>
+<main>
+<div class="wrap card">
+
+  {% if step == "done" %}
+    <h2>Request received</h2>
+    <div class="alert ok">We’ve received your request to delete the Turflet account for <strong>{{ email }}</strong>.</div>
+    <p>We’ll delete your account and personal data within <strong>30 days</strong> and email you when it’s done. If you change your mind before then, email <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+  {% else %}
+
+  <h2>How to request deletion</h2>
+  <ol>
+    <li>Enter the email address you use to sign in to the Turflet app.</li>
+    <li>We’ll email you a 6-digit code to confirm the account is yours.</li>
+    <li>Enter the code below and submit your request.</li>
+  </ol>
+  <p class="muted">You can also email <a href="mailto:{{ support_email }}?subject=Delete%20my%20Turflet%20account">{{ support_email }}</a> from your sign-in email address with the subject “Delete my Turflet account”.</p>
+
+  {% if error %}<div class="alert err">{{ error }}</div>{% endif %}
+
+  {% if step == "code" %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="confirm">
+      <p>We sent a code to <strong>{{ email }}</strong>. It expires in 10 minutes.</p>
+      <label for="code">6-digit code</label>
+      <input class="code" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required autofocus>
+      <label for="reason">Why are you leaving? <span class="muted">(optional)</span></label>
+      <textarea id="reason" name="reason" maxlength="1000">{{ reason }}</textarea>
+      <button type="submit">Request account deletion</button>
+    </form>
+    <p class="muted"><a href="{% url 'delete_account' %}">Use a different email</a></p>
+  {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="send">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" autocomplete="email" value="{{ email }}" required autofocus>
+      <button type="submit">Send code</button>
+    </form>
+  {% endif %}
+  {% endif %}
+
+  <div class="grid">
+    <div>
+      <h2>What we delete</h2>
+      <ul>
+        <li>Your account and sign-in email</li>
+        <li>Profile: name, mobile number, address, handle and photo</li>
+        <li>Your sports and skill levels</li>
+        <li>Saved location, city and area</li>
+        <li>Saved venues, reviews and notifications</li>
+        <li>Push notification tokens for your devices</li>
+        <li>Your wallet balance and referral code</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What we keep</h2>
+      <ul>
+        <li><strong>Booking, payment and refund records</strong>, kept only as long as tax and accounting laws require (up to 8 years), then deleted.</li>
+        <li><strong>Messages in match chats</strong> are anonymised, so other players see “Deleted user” instead of your name.</li>
+        <li><strong>Server logs</strong> are kept for up to 90 days for security, then deleted.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="muted">Deleting your account can’t be undone. Any unused wallet balance is lost. Read our <a href="{% url 'privacy' %}">Privacy Policy</a> for more.</p>
+</div>
+</main>
+</body>
+</html>
