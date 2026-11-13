@@ -486,7 +486,9 @@ def _slot_free(lobby, date=None, start=None, court=None):
 # ------------------------------------------------------------------ joining
 
 def _locked(lobby):
-    return Lobby.objects.select_for_update().select_related("venue", "court", "sport", "host", "booking").get(pk=lobby.pk)
+    # lock only the lobby row: Postgres can't FOR UPDATE the nullable side of the booking outer join
+    return (Lobby.objects.select_for_update(of=("self",))
+            .select_related("venue", "court", "sport", "host", "booking").get(pk=lobby.pk))
 
 
 def membership(lobby, user):

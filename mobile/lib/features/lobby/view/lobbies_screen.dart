@@ -161,15 +161,18 @@ class _InviteSheet extends StatefulWidget {
 }
 
 class _InviteSheetState extends State<_InviteSheet> {
-  String? busy;
+  String? busy, error;
 
   Future<void> _answer(String action) async {
-    setState(() => busy = action);
+    setState(() {
+      busy = action;
+      error = null;
+    });
     try {
       await context.read<LobbyRepository>().action(widget.lobby['id'], action);
       if (mounted) Navigator.pop(context, action == 'accept-invite');
     } catch (e) {
-      if (mounted) toast(context, e.toString());
+      if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => busy = null);
     }
@@ -198,6 +201,7 @@ class _InviteSheetState extends State<_InviteSheet> {
             style: t(13, h: 1.4),
           ),
         ),
+        if (error != null) _SheetError(error!),
         const SizedBox(height: 14),
         PrimaryButton('Accept & join', loading: busy == 'accept-invite', onTap: busy == null ? () => _answer('accept-invite') : null),
         const SizedBox(height: 8),
@@ -218,14 +222,18 @@ class _RequestSheet extends StatefulWidget {
 class _RequestSheetState extends State<_RequestSheet> {
   final note = TextEditingController();
   bool busy = false;
+  String? error; // shown inside the sheet: a SnackBar would sit hidden behind the sheet's barrier
 
   Future<void> _send() async {
-    setState(() => busy = true);
+    setState(() {
+      busy = true;
+      error = null;
+    });
     try {
       final r = await context.read<LobbyRepository>().requestToJoin(widget.lobby['id'], note.text.trim());
       if (mounted) Navigator.pop(context, r);
     } catch (e) {
-      if (mounted) toast(context, e.toString());
+      if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -288,6 +296,7 @@ class _RequestSheetState extends State<_RequestSheet> {
             ),
           ),
         ),
+        if (error != null) _SheetError(error!),
         const SizedBox(height: 12),
         PrimaryButton('Send request', loading: busy, onTap: _send),
       ],
@@ -302,6 +311,28 @@ class _RequestSheetState extends State<_RequestSheet> {
         Icon(icon, size: 16, color: C.green700),
         const SizedBox(width: 10),
         Expanded(child: Text(text, style: t(13, h: 1.4))),
+      ],
+    ),
+  );
+}
+
+
+/// Inline error for a bottom sheet.
+class _SheetError extends StatelessWidget {
+  final String message;
+  const _SheetError(this.message);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(top: 12),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: C.redSoft, borderRadius: BorderRadius.circular(12)),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(LucideIcons.circleAlert, size: 16, color: C.redInk),
+        const SizedBox(width: 8),
+        Expanded(child: Text(message, style: t(13, c: C.redInk, h: 1.4))),
       ],
     ),
   );
