@@ -51,7 +51,9 @@ class _SquadBuilderView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<SquadBuilderCubit, SquadBuilderState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<SquadBuilderCubit, SquadBuilderState>(
     builder: (context, st) {
       final cubit = context.read<SquadBuilderCubit>();
       final top = MediaQuery.of(context).padding.top;
@@ -87,18 +89,29 @@ class _SquadBuilderView extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 children: [
                   _slotCard(st),
-                  const Label('Team capacity', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
+                  const Label(
+                    'Team capacity',
+                    padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
+                  ),
                   _capacity(st, cubit),
-                  const Label('Your squad', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
+                  const Label(
+                    'Your squad',
+                    padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
+                  ),
                   _squad(context, st, cubit),
-                  const Label('Payment rule · set once', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
+                  const Label(
+                    'Payment rule · set once',
+                    padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
+                  ),
                   Row(
                     children: [
                       Expanded(
                         child: _option(
                           st.rule == 'split',
                           'Split equally',
-                          st.split ? '${inr(st.perHead)} each' : 'Everyone pays a share',
+                          st.split
+                              ? '${inr(st.perHead)} each'
+                              : 'Everyone pays a share',
                           LucideIcons.arrowLeftRight,
                           () => cubit.setRule('split'),
                         ),
@@ -118,7 +131,10 @@ class _SquadBuilderView extends StatelessWidget {
                   const SizedBox(height: 16),
                   _publicToggle(st, cubit),
                   if (st.split) ...[
-                    const Label('How to book the turf', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
+                    const Label(
+                      'How to book the turf',
+                      padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
+                    ),
                     _modeCard(
                       st,
                       'book_recover',
@@ -147,7 +163,12 @@ class _SquadBuilderView extends StatelessWidget {
               ),
             ),
             Container(
-              padding: EdgeInsets.fromLTRB(20, 14, 20, 14 + MediaQuery.of(context).padding.bottom),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                14,
+                20,
+                14 + MediaQuery.of(context).padding.bottom,
+              ),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(top: BorderSide(color: C.line)),
@@ -159,7 +180,11 @@ class _SquadBuilderView extends StatelessWidget {
                     ? 'Lock turf & publish lobby'
                     : 'Lock turf · ${inr(a.turfPrice)}',
                 loading: st.busy,
-                trailing: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18),
+                trailing: const Icon(
+                  LucideIcons.arrowRight,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 onTap: () => _create(context),
               ),
             ),
@@ -175,13 +200,21 @@ class _SquadBuilderView extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Img(a.venue['image'], width: 52, height: 52, radius: BorderRadius.circular(14)),
+          Img(
+            a.venue['image'],
+            width: 52,
+            height: 52,
+            radius: BorderRadius.circular(14),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${a.sport['name']} · ${a.court['name']}', style: t(15, w: FontWeight.w700)),
+                Text(
+                  '${a.sport['name']} · ${a.court['name']}',
+                  style: t(15, w: FontWeight.w700),
+                ),
                 Text(
                   '${st.dateLabel} · ${fmtTime(a.startHour)} – ${fmtTime(a.startHour + a.duration)}',
                   style: t(13, c: C.muted),
@@ -202,7 +235,12 @@ class _SquadBuilderView extends StatelessWidget {
   }
 
   Widget _capacity(SquadBuilderState st, SquadBuilderCubit cubit) {
-    Widget btn(String label, bool primary, VoidCallback onTap, String semantics) => Semantics(
+    Widget btn(
+      String label,
+      bool primary,
+      VoidCallback onTap,
+      String semantics,
+    ) => Semantics(
       button: true,
       label: semantics,
       child: GestureDetector(
@@ -216,7 +254,10 @@ class _SquadBuilderView extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: primary ? null : Border.all(color: C.line),
           ),
-          child: Text(label, style: t(20, w: FontWeight.w700, c: primary ? Colors.white : C.ink)),
+          child: Text(
+            label,
+            style: t(20, w: FontWeight.w700, c: primary ? Colors.white : C.ink),
+          ),
         ),
       ),
     );
@@ -239,20 +280,40 @@ class _SquadBuilderView extends StatelessWidget {
               ],
             ),
           ),
-          btn('−', false, () => cubit.setCapacity(st.capacity - 1), 'Fewer players'),
+          btn(
+            '−',
+            false,
+            () => cubit.setCapacity(st.capacity - 1),
+            'Fewer players',
+          ),
           SizedBox(
             width: 48,
-            child: Text('${st.capacity}', textAlign: TextAlign.center, style: d(22)),
+            child: Text(
+              '${st.capacity}',
+              textAlign: TextAlign.center,
+              style: d(22),
+            ),
           ),
-          btn('+', true, () => cubit.setCapacity(st.capacity + 1), 'More players'),
+          btn(
+            '+',
+            true,
+            () => cubit.setCapacity(st.capacity + 1),
+            'More players',
+          ),
         ],
       ),
     );
   }
 
-  Widget _squad(BuildContext context, SquadBuilderState st, SquadBuilderCubit cubit) {
+  Widget _squad(
+    BuildContext context,
+    SquadBuilderState st,
+    SquadBuilderCubit cubit,
+  ) {
     final me = context.read<AppCubit>().state.user ?? const {};
-    final recent = st.recent.where((p) => !st.friends.any((f) => f['user_id'] == p['id'])).toList();
+    final recent = st.recent
+        .where((p) => !st.friends.any((f) => f['user_id'] == p['id']))
+        .toList();
     return CardBox(
       padding: const EdgeInsets.all(14),
       shadow: null,
@@ -260,7 +321,14 @@ class _SquadBuilderView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _personRow(me['initials'] ?? 'ME', 'You', 'Host', C.mint, C.green700, null),
+          _personRow(
+            me['initials'] ?? 'ME',
+            'You',
+            'Host',
+            C.mint,
+            C.green700,
+            null,
+          ),
           for (final (i, f) in st.friends.indexed)
             _personRow(
               f['initials'] ?? '',
@@ -275,7 +343,10 @@ class _SquadBuilderView extends StatelessWidget {
             Container(
               margin: const EdgeInsets.only(top: 6),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: C.ground, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: C.ground,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
                   const Icon(LucideIcons.userPlus, size: 16, color: C.muted),
@@ -341,11 +412,22 @@ class _SquadBuilderView extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Avatar(p['initials'] ?? '', size: 22, index: (p['id'] ?? 0) as int),
+                          Avatar(
+                            p['initials'] ?? '',
+                            size: 22,
+                            index: (p['id'] ?? 0) as int,
+                          ),
                           const SizedBox(width: 6),
-                          Text((p['name'] ?? '').toString().split(' ').first, style: t(12, w: FontWeight.w600)),
+                          Text(
+                            (p['name'] ?? '').toString().split(' ').first,
+                            style: t(12, w: FontWeight.w600),
+                          ),
                           const SizedBox(width: 4),
-                          const Icon(LucideIcons.plus, size: 12, color: C.brand),
+                          const Icon(
+                            LucideIcons.plus,
+                            size: 12,
+                            color: C.brand,
+                          ),
                         ],
                       ),
                     ),
@@ -358,123 +440,175 @@ class _SquadBuilderView extends StatelessWidget {
     );
   }
 
-  Widget _personRow(String initials, String name, String tag, Color bg, Color fg, VoidCallback? onRemove, {int index = 0}) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(
-          children: [
-            Avatar(initials, size: 32, index: index),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(name, style: t(14, w: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            Pill(tag, bg: bg, fg: fg),
-            if (onRemove != null)
-              IconButton(
-                onPressed: onRemove,
-                visualDensity: VisualDensity.compact,
-                tooltip: 'Remove',
-                icon: const Icon(LucideIcons.x, size: 16, color: C.muted),
-              ),
-          ],
+  Widget _personRow(
+    String initials,
+    String name,
+    String tag,
+    Color bg,
+    Color fg,
+    VoidCallback? onRemove, {
+    int index = 0,
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      children: [
+        Avatar(initials, size: 32, index: index),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            name,
+            style: t(14, w: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-      );
+        Pill(tag, bg: bg, fg: fg),
+        if (onRemove != null)
+          IconButton(
+            onPressed: onRemove,
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Remove',
+            icon: const Icon(LucideIcons.x, size: 16, color: C.muted),
+          ),
+      ],
+    ),
+  );
 
   Future<void> _addFriend(BuildContext context, SquadBuilderCubit cubit) async {
-    final contact = TextEditingController();
     var busy = false;
     String? error;
     final player = await sheet<Json>(
       context,
-      (ctx) => StatefulBuilder(
-        builder: (ctx, set) {
-          Future<void> find() async {
-            set(() => busy = true);
-            try {
-              final p = await cubit.lookup(contact.text);
-              if (ctx.mounted) Navigator.pop(ctx, p);
-            } catch (e) {
-              set(() {
-                busy = false;
-                error = e.toString();
-              });
+      (ctx) => _OwnedController(
+        builder: (contact) => StatefulBuilder(
+          builder: (ctx, set) {
+            Future<void> find() async {
+              set(() => busy = true);
+              try {
+                final p = await cubit.lookup(contact.text);
+                if (ctx.mounted) Navigator.pop(ctx, p);
+              } catch (e) {
+                set(() {
+                  busy = false;
+                  error = e.toString();
+                });
+              }
             }
-          }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Add a friend', style: d(22)),
-              const SizedBox(height: 6),
-              Text(
-                'Known players are on Turflet: they get a payment card in the Match Room chat.',
-                style: t(13, c: C.muted, h: 1.4),
-              ),
-              const SizedBox(height: 14),
-              _field(contact, 'Email, mobile or referral code', TextInputType.emailAddress, autofocus: true, onSubmit: find),
-              if (error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(error!, style: t(13, c: C.redInk)),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Add a friend', style: d(22)),
+                const SizedBox(height: 6),
+                Text(
+                  'Known players are on Turflet: they get a payment card in the Match Room chat.',
+                  style: t(13, c: C.muted, h: 1.4),
                 ),
-              const SizedBox(height: 12),
-              PrimaryButton('Find player', height: 52, loading: busy, onTap: find),
-            ],
-          );
-        },
+                const SizedBox(height: 14),
+                _field(
+                  contact,
+                  'Email, mobile or referral code',
+                  TextInputType.emailAddress,
+                  autofocus: true,
+                  onSubmit: find,
+                ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(error!, style: t(13, c: C.redInk)),
+                  ),
+                const SizedBox(height: 12),
+                PrimaryButton(
+                  'Find player',
+                  height: 52,
+                  loading: busy,
+                  onTap: find,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
-    contact.dispose();
     if (player == null || !context.mounted) return;
     final err = cubit.addKnown(player);
     if (err != null) toast(context, err);
   }
 
   Future<void> _addGuest(BuildContext context, SquadBuilderCubit cubit) async {
-    final name = TextEditingController();
-    final ok = await sheet<bool>(
+    final value = await sheet<String>(
       context,
-      (ctx) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Add a guest', style: d(22)),
-          const SizedBox(height: 6),
-          Text('Guests aren\'t on Turflet. You cover their share.', style: t(13, c: C.muted, h: 1.4)),
-          const SizedBox(height: 14),
-          _field(name, 'Guest name', TextInputType.name, autofocus: true, onSubmit: () => Navigator.pop(ctx, true)),
-          const SizedBox(height: 12),
-          PrimaryButton('Add guest', height: 52, onTap: () => Navigator.pop(ctx, true)),
-        ],
+      (ctx) => _OwnedController(
+        builder: (name) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Add a guest', style: d(22)),
+            const SizedBox(height: 6),
+            Text(
+              'Guests aren\'t on Turflet. You cover their share.',
+              style: t(13, c: C.muted, h: 1.4),
+            ),
+            const SizedBox(height: 14),
+            _field(
+              name,
+              'Guest name',
+              TextInputType.name,
+              autofocus: true,
+              onSubmit: () => Navigator.pop(ctx, name.text),
+            ),
+            const SizedBox(height: 12),
+            PrimaryButton(
+              'Add guest',
+              height: 52,
+              onTap: () => Navigator.pop(ctx, name.text),
+            ),
+          ],
+        ),
       ),
     );
-    final value = name.text;
-    name.dispose();
-    if (ok != true || !context.mounted) return;
+    if (value == null || !context.mounted) return;
     final err = cubit.addGuest(value);
     if (err != null) toast(context, err);
   }
 
-  Widget _field(TextEditingController c, String hint, TextInputType type, {bool autofocus = false, VoidCallback? onSubmit}) =>
-      Container(
-        height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: C.ground,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: C.line),
-        ),
-        child: TextField(
-          controller: c,
-          autofocus: autofocus,
-          keyboardType: type,
-          textCapitalization: type == TextInputType.name ? TextCapitalization.words : TextCapitalization.none,
-          style: t(15),
-          onSubmitted: (_) => onSubmit?.call(),
-          decoration: InputDecoration(border: InputBorder.none, hintText: hint, hintStyle: t(15, c: C.muted)),
-        ),
-      );
+  Widget _field(
+    TextEditingController c,
+    String hint,
+    TextInputType type, {
+    bool autofocus = false,
+    VoidCallback? onSubmit,
+  }) => Container(
+    height: 50,
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+      color: C.ground,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: C.line),
+    ),
+    child: TextField(
+      controller: c,
+      autofocus: autofocus,
+      keyboardType: type,
+      textCapitalization: type == TextInputType.name
+          ? TextCapitalization.words
+          : TextCapitalization.none,
+      style: t(15),
+      onSubmitted: (_) => onSubmit?.call(),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        hintText: hint,
+        hintStyle: t(15, c: C.muted),
+      ),
+    ),
+  );
 
-  Widget _option(bool on, String title, String sub, IconData icon, VoidCallback onTap) => Choice(
+  Widget _option(
+    bool on,
+    String title,
+    String sub,
+    IconData icon,
+    VoidCallback onTap,
+  ) => Choice(
     selected: on,
     filled: false,
     selBg: C.mint,
@@ -495,7 +629,12 @@ class _SquadBuilderView extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(title, style: t(14, w: FontWeight.w700)),
-        Text(sub, style: t(11, c: C.muted), maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(
+          sub,
+          style: t(11, c: C.muted),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     ),
   );
@@ -518,7 +657,10 @@ class _SquadBuilderView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Open to solo players', style: t(14, w: FontWeight.w700)),
+                    Text(
+                      'Open to solo players',
+                      style: t(14, w: FontWeight.w700),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       !can
@@ -607,30 +749,71 @@ class _SquadBuilderView extends StatelessWidget {
       border: Border.all(color: C.line),
       child: Column(
         children: [
-          PriceRow('Turf · ${a.duration} hr${a.duration == 1 ? '' : 's'}', inr(a.turfPrice)),
+          PriceRow(
+            'Turf · ${a.duration} hr${a.duration == 1 ? '' : 's'}',
+            inr(a.turfPrice),
+          ),
           const SizedBox(height: 8),
-          PriceRow('Players', '${st.capacity} (${st.squad} in squad${st.isPublic && st.openSpots > 0 ? ', ${st.openSpots} open' : ''})'),
+          PriceRow(
+            'Players',
+            '${st.capacity} (${st.squad} in squad${st.isPublic && st.openSpots > 0 ? ', ${st.openSpots} open' : ''})',
+          ),
           if (st.split) ...[
             const SizedBox(height: 8),
-            PriceRow('Each player pays', '${inr(st.share)} + ${inr(st.splitFee)} fee'),
+            PriceRow(
+              'Each player pays',
+              '${inr(st.share)} + ${inr(st.splitFee)} fee',
+            ),
             if (st.guests > 0) ...[
               const SizedBox(height: 8),
-              PriceRow('You cover ${st.guests} guest${st.guests == 1 ? '' : 's'}', inr(st.share * st.guests)),
+              PriceRow(
+                'You cover ${st.guests} guest${st.guests == 1 ? '' : 's'}',
+                inr(st.share * st.guests),
+              ),
             ],
           ],
           const SizedBox(height: 12),
           PriceRow(
-            st.crowdfund ? 'You pay now (into escrow)' : 'You pay now (+ booking fee)',
+            st.crowdfund
+                ? 'You pay now (into escrow)'
+                : 'You pay now (+ booking fee)',
             inr(st.hostPaysNow),
             bold: true,
             top: true,
           ),
           if (st.split && !st.crowdfund && others > 0) ...[
             const SizedBox(height: 6),
-            PriceRow('You recover up to', inr(st.share * others), color: C.green700),
+            PriceRow(
+              'You recover up to',
+              inr(st.share * others),
+              color: C.green700,
+            ),
           ],
         ],
       ),
     );
   }
+}
+
+/// Owns a [TextEditingController] for a bottom sheet's lifetime. Disposing it right after
+/// `await sheet(...)` is too early: the sheet's exit animation still rebuilds the TextField.
+class _OwnedController extends StatefulWidget {
+  final Widget Function(TextEditingController controller) builder;
+  const _OwnedController({required this.builder});
+
+  @override
+  State<_OwnedController> createState() => _OwnedControllerState();
+}
+
+class _OwnedControllerState extends State<_OwnedController> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(_controller);
 }
