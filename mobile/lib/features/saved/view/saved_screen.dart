@@ -195,7 +195,11 @@ class _SavedViewState extends State<_SavedView> {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () => context.pushVenue(v['id']),
+                onTap: () async {
+                  final cubit = context.read<SavedCubit>();
+                  await context.pushVenue(v['id']); // may unsave / book there
+                  if (!cubit.isClosed) cubit.load();
+                },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -270,7 +274,11 @@ class _SavedViewState extends State<_SavedView> {
                       borderRadius: BorderRadius.circular(10),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(10),
-                        onTap: () => openSlotBooking(context, v['id']),
+                        onTap: () async {
+                          final cubit = context.read<SavedCubit>();
+                          await openSlotBooking(context, v['id']);
+                          if (!cubit.isClosed) cubit.load();
+                        },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Center(

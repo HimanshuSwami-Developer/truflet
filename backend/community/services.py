@@ -176,8 +176,7 @@ def _refund(member, why):
 
 
 def _pay_card(lobby, member):
-    deadline = " · pay within 15 min" if member.pay_by else ""
-    return post(lobby, f"₹{member.amount_due} due from {member.display_name}{deadline}", kind="payment", member=member)
+    return post(lobby, f"₹{member.amount_due} due from {member.display_name}", kind="payment", member=member)
 
 
 # ------------------------------------------------------------------ creating
@@ -265,13 +264,11 @@ def create_lobby(user, data):
     for name in guests:
         LobbyMember.objects.create(lobby=lobby, guest_name=name, tag="guest", status="confirmed")
 
-    post(lobby, f"{first_name(user)} created this match · {lobby.get_payment_rule_display()}"
-                + (f" · {lobby.get_booking_mode_display()}" if rule == "split" else ""))
+    post(lobby, f"{first_name(user)} created the match · {lobby.get_payment_rule_display()}")
     if upfront:
-        post(lobby, "The turf isn't booked yet. Host: tap “Lock turf” when you're ready to pay for the slot.")
+        post(lobby, "Turf not booked yet")
     else:
-        post(lobby, "Crowdfunding: the turf is booked as soon as the pool covers the slot. "
-                    "Money stays in escrow until then.")
+        post(lobby, "Crowdfunding · turf books when the pool is full")
         _pay_card(lobby, host)
     _send_invites(lobby)
     return lobby, None
@@ -283,7 +280,7 @@ def _send_invites(lobby):
         notify(m.user, f"{first_name(lobby.host)} invited you to play",
                f"{lobby.sport.name} at {lobby.venue.name} · {when(lobby)} · open Matches to accept", "match")
     if invited:
-        post(lobby, f"Invited {', '.join(m.display_name for m in invited)} — their spots are saved until they reply.")
+        post(lobby, f"Invited {', '.join(m.display_name for m in invited)}")
 
 
 def _invite_known(lobby):
@@ -304,7 +301,7 @@ def accept_invite(lobby, user):
         raise ValidationError({"invite": "This match is no longer open."})
     m.status = "pending" if lobby.is_split else "confirmed"
     m.save(update_fields=["status", "updated_at"])
-    post(lobby, f"{m.display_name} accepted the invite.")
+    post(lobby, f"{m.display_name} joined")
     if m.status == "pending" and lobby.status in ("crowdfunding", "locked"):
         _pay_card(lobby, m)
     notify(lobby.host, f"{m.display_name} accepted your invite", f"{lobby.venue.name} · {when(lobby)}", "match")
@@ -319,7 +316,7 @@ def decline_invite(lobby, user):
         raise ValidationError({"invite": "There's no open invite for you in this match."})
     m.status = "declined"
     m.save(update_fields=["status", "updated_at"])
-    post(lobby, f"{m.display_name} declined the invite — a spot is open.")
+    post(lobby, f"{m.display_name} declined · spot open")
     notify(lobby.host, f"{m.display_name} can't make it", f"{lobby.venue.name} · {when(lobby)} · a spot is open",
            "match")
 
@@ -359,9 +356,7 @@ def on_booking_paid(booking):
         host.save()
         lobby.status = "locked"
         lobby.save(update_fields=["status", "updated_at"])
-        post(lobby, f"Turf locked · booking {booking.code}. "
-                    + ("Shares are collected into escrow and released to the host at check-in."
-                       if lobby.is_split else "The host covered the full amount — everyone plays free."))
+        post(lobby, f"Turf locked 🔒 · {booking.code}" + ("" if lobby.is_split else " · host covers all"))
         _invite_known(lobby)
 
 
@@ -390,7 +385,7 @@ def _end(lobby, status, by, why):
     if lobby.payout_status in ("held", "disputed"):
         lobby.payout_status = "refunded"
     lobby.save(update_fields=["status", "cancelled_by", "alert", "payout_status", "updated_at"])
-    post(lobby, f"{why}. Everyone who paid gets a full refund.")
+    post(lobby, f"{why} · full refunds")
     for m in lobby.active_members().exclude(user=None).exclude(tag="host").select_related("user"):
         notify(m.user, "Match cancelled", f"{lobby.venue.name} · {when(lobby)} · {why}", "match")
 
@@ -412,7 +407,7 @@ def sync_one(lobby):
     for m in lobby.members.filter(status="pending", pay_by__lt=now).select_related("user"):
         m.status = "removed"
         m.save(update_fields=["status", "updated_at"])
-        post(lobby, f"{m.display_name} didn't pay within 15 minutes — the spot is open again.")
+        post(lobby, f"{m.display_name} didn't pay in time · spot open")
         if m.user_id:
             notify(m.user, "Payment window expired", f"Your spot at {lobby.venue.name} was released.", "match")
     if lobby.booking_id:
@@ -431,7 +426,7 @@ def sync_one(lobby):
             if lobby.alert != "slot_taken":
                 lobby.alert = "slot_taken"
                 lobby.save(update_fields=["alert", "updated_at"])
-                post(lobby, "Another group booked this slot first. Host: switch to another slot or cancel.")
+                post(lobby, "Slot taken by another group")
                 notify(lobby.host, "Your slot was booked by another group",
                        f"{lobby.venue.name} · {when(lobby)} — switch slot or cancel", "match")
         return
@@ -444,15 +439,13 @@ def sync_one(lobby):
             if lobby.alert != "slot_taken":
                 lobby.alert = "slot_taken"
                 lobby.save(update_fields=["alert", "updated_at"])
-                post(lobby, "Another group booked this slot first. Host: switch to another slot or cancel "
-                            "(everyone is refunded).")
+                post(lobby, "Slot taken by another group")
                 notify(lobby.host, "Your slot was booked by another group",
                        f"{lobby.venue.name} · {when(lobby)} — switch slot or cancel", "match")
         elif lobby.minutes_left <= UNFILLED_ALERT_MINUTES and lobby.alert == "":
             lobby.alert = "unfilled"
             lobby.save(update_fields=["alert", "updated_at"])
-            post(lobby, "Kickoff is less than an hour away and the pool isn't full. Host: pay the remaining "
-                        "balance, switch slot, or unpublish.")
+            post(lobby, "Under an hour to kickoff · pool not full")
             notify(lobby.host, "Your lobby isn't full yet",
                    f"{lobby.venue.name} · {when(lobby)} — pay the balance, switch slot or unpublish", "match")
         return
@@ -520,13 +513,12 @@ def request_join(lobby, user, note=""):
     if not created:
         if req.status == "pending":
             return req
-        if req.status == "declined":
-            raise ValidationError({"lobby": "The host declined your request for this match."})
+        # declined / withdrawn / removed earlier → the player may ask again (same private thread)
         req.status, req.decided_at = "pending", None
         req.save(update_fields=["status", "decided_at", "updated_at"])
     stats = attendance(user)
     score = f"{stats['score']}% attendance" if stats["score"] is not None else "new player"
-    post(lobby, f"{first_name(user)} asked to join · {stats['played']} games played · {score}", request=req)
+    post(lobby, f"{first_name(user)} asked to join · {stats['played']} games · {score}", request=req)
     note = (note or "").strip()
     if note:
         post(lobby, note, sender=user, kind="text", request=req)
@@ -541,7 +533,7 @@ def withdraw(req, user):
         raise ValidationError({"request": "Nothing to withdraw."})
     req.status, req.decided_at = "withdrawn", timezone.now()
     req.save(update_fields=["status", "decided_at", "updated_at"])
-    post(req.lobby, f"{first_name(user)} withdrew the request.", request=req)
+    post(req.lobby, f"{first_name(user)} withdrew", request=req)
 
 
 @transaction.atomic
@@ -556,7 +548,7 @@ def decide(req, host, approve):
     if not approve:
         req.status, req.decided_at = "declined", now
         req.save(update_fields=["status", "decided_at", "updated_at"])
-        post(lobby, "The host declined this request. Thread closed.", request=req)
+        post(lobby, "Declined", request=req)
         notify(req.user, "Request declined", f"{lobby.venue.name} · {when(lobby)}", "match")
         return req, None
     sync_one(lobby)
@@ -573,8 +565,8 @@ def decide(req, host, approve):
     member.save()
     req.status, req.decided_at = "approved", now
     req.save(update_fields=["status", "decided_at", "updated_at"])
-    post(lobby, "Approved — you're in the Match Room now.", request=req)
-    post(lobby, f"{first_name(req.user)} joined the match (solo)")
+    post(lobby, "Approved", request=req)
+    post(lobby, f"{first_name(req.user)} joined (solo)")
     if lobby.is_split:
         _pay_card(lobby, member)
         body = f"Pay your ₹{member.amount_due} share within 15 minutes to keep your spot."
@@ -643,7 +635,7 @@ def pay_share(lobby, user, method, upi_id=""):
     m.status, m.escrow, m.pay_by, m.paid_at = "confirmed", "held", None, timezone.now()
     m.payment_method, m.transaction_id = method, txn
     m.save()
-    post(lobby, f"{m.display_name} paid ₹{amount} into escrow ✓")
+    # no extra chat line: this member's payment card flips to "paid" in place
     if m.tag != "host":
         notify(lobby.host, f"{first_name(user)} paid their share", f"{lobby.venue.name} · {when(lobby)}", "match")
     # a replacement joined → refund the earliest early drop-off
@@ -651,7 +643,7 @@ def pay_share(lobby, user, method, upi_id=""):
         leaver = lobby.members.filter(refund_due=True).order_by("updated_at").first()
         if leaver:
             _refund(leaver, "A replacement joined")
-            post(lobby, f"{leaver.display_name}'s spot was filled — their share is refunded.")
+            post(lobby, f"{leaver.display_name} refunded · spot filled")
     if lobby.status == "locked" and lobby.booking_mode == "book_recover" and lobby.payout_status == "none":
         lobby.payout_status = "held"
         lobby.save(update_fields=["payout_status", "updated_at"])
@@ -672,7 +664,7 @@ def _lock_from_pool(lobby):
     if not _slot_free(lobby):
         lobby.alert = "slot_taken"
         lobby.save(update_fields=["alert", "updated_at"])
-        post(lobby, "The pool is full, but another group booked this slot first. Host: switch slot or cancel.")
+        post(lobby, "Pool full, but slot taken by another group")
         notify(lobby.host, "Your slot was booked by another group", f"{lobby.venue.name} · {when(lobby)}", "match")
         return False
     hours = range(lobby.start_hour, lobby.end_hour)
@@ -686,7 +678,7 @@ def _lock_from_pool(lobby):
     lobby.booking, lobby.status, lobby.alert, lobby.payout_status = booking, "locked", "", "settled"
     lobby.payout_trigger, lobby.payout_at = "venue", timezone.now()
     lobby.save()
-    post(lobby, f"Turf locked! The pool covered ₹{lobby.turf_price} and was paid to the venue · booking {booking.code}")
+    post(lobby, f"Turf locked 🔒 · {booking.code}")
     for m in lobby.active_members().exclude(user=None).select_related("user"):
         notify(m.user, "Turf locked 🎉", f"{lobby.venue.name} · {when(lobby)}", "match")
     return True
@@ -709,7 +701,7 @@ def pay_balance(lobby, host, method, upi_id=""):
     h.status, h.escrow, h.paid_at, h.pay_by = "confirmed", "held", timezone.now(), None
     h.share_due, h.fee_due = h.share_paid, h.fee_paid
     h.save()
-    post(lobby, f"{first_name(host)} paid the remaining ₹{balance}.")
+    post(lobby, f"{first_name(host)} paid the ₹{balance} balance")
     lobby.booking_mode = "book_recover"  # players who still pay now recover the host's money
     lobby.save(update_fields=["booking_mode", "updated_at"])
     _lock_from_pool(lobby)
@@ -746,7 +738,7 @@ def switch_slot(lobby, host, data):
     for m in lobby.members.filter(status__in=("invited", "pending")).exclude(tag="host"):
         m.share_due = lobby.share if lobby.is_split else 0
         m.save(update_fields=["share_due", "updated_at"])
-    post(lobby, f"The host moved the match to {when(lobby)} · {court.name}.")
+    post(lobby, f"Moved to {when(lobby)} · {court.name}")
     for m in lobby.active_members().exclude(user=None).exclude(tag="host").select_related("user"):
         notify(m.user, "Match moved", f"{lobby.venue.name} · {when(lobby)}", "match")
     if lobby.pooled() >= lobby.turf_price:
@@ -769,12 +761,12 @@ def unpublish(lobby, host):
     for req in lobby.requests.filter(status="pending"):
         req.status, req.decided_at = "declined", timezone.now()
         req.save(update_fields=["status", "decided_at", "updated_at"])
-        post(lobby, "The host stopped recruiting. Thread closed.", request=req)
+        post(lobby, "Lobby closed", request=req)
     lobby.is_public = False
     if lobby.alert == "unfilled":
         lobby.alert = ""
     lobby.save(update_fields=["is_public", "alert", "updated_at"])
-    post(lobby, "The host unpublished this lobby. Solo players were refunded; the squad chat stays.")
+    post(lobby, "Lobby unpublished · solo players refunded")
     return lobby
 
 
@@ -809,7 +801,7 @@ def remove_member(lobby, host, member_id):
         _refund(m, "The host removed you from the match")
     m.status = "removed"
     m.save(update_fields=["status", "updated_at"])
-    post(lobby, f"The host removed {m.display_name}.")
+    post(lobby, f"{m.display_name} removed")
     return lobby
 
 
@@ -835,7 +827,7 @@ def leave(lobby, user):
         outcome = "not refundable (less than 30 minutes before kickoff)"
     m.status = "left" if m.status != "refunded" else m.status
     m.save()
-    post(lobby, f"{m.display_name} left the match — a spot is open.")
+    post(lobby, f"{m.display_name} left · spot open")
     notify(lobby.host, f"{m.display_name} left your match", f"{lobby.venue.name} · {when(lobby)}", "match")
     return outcome
 
@@ -861,7 +853,7 @@ def checkin(lobby, user, lat, lng):
         raise ValidationError({"checkin": f"You're {int(km * 1000)} m from the venue — get within {GEOFENCE_METRES} m."})
     m.checked_in_at = now
     m.save(update_fields=["checked_in_at", "updated_at"])
-    post(lobby, f"{m.display_name} checked in at the venue 📍")
+    post(lobby, f"{m.display_name} checked in 📍")
     arrived = lobby.members.filter(checked_in_at__isnull=False)
     if arrived.filter(tag="host").exists() and arrived.filter(tag="solo").exists():
         release_payout(lobby, "gps")
@@ -883,7 +875,7 @@ def release_payout(lobby, trigger):
         lobby.save(update_fields=["payout_status", "payout_trigger", "payout_at", "updated_at"])
         how = {"qr": "the venue scanned your booking", "gps": "your group checked in at the venue",
                "auto": "no no-show was reported"}[trigger]
-        post(lobby, f"₹{total} released from escrow to the host — {how}.")
+        post(lobby, f"₹{total} released to host · {how}")
         if total:
             notify(lobby.host, f"₹{total} added to your Turflet balance", f"Recovered shares · {how}", "match")
         return total
@@ -904,8 +896,7 @@ def report_no_show(lobby, user, reason=""):
     if held:
         lobby.payout_status = "disputed"
         lobby.save(update_fields=["payout_status", "updated_at"])
-    post(lobby, f"{m.display_name} reported a no-show. "
-                + ("The payout is on hold until support reviews it." if held else "Support will review it."))
+    post(lobby, f"{m.display_name} reported a no-show" + (" · payout on hold" if held else ""))
     notify(lobby.host, "A player reported a no-show", f"{lobby.venue.name} · {when(lobby)}", "match")
     return held
 

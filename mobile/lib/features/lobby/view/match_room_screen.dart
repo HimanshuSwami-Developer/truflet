@@ -282,7 +282,11 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           item(LucideIcons.mapPin, 'Venue details', () => context.pushVenue(lobby['venue']['id'])),
-          if (booking != null) item(LucideIcons.ticket, 'Booking ticket', () => context.pushTicket(booking['id'])),
+          if (booking != null)
+            item(LucideIcons.ticket, 'Booking ticket', () async {
+              await context.pushTicket(booking['id']); // a cancel there ends the match
+              _cubit.reload();
+            }),
           if (host['can_switch'] == true) item(LucideIcons.calendarClock, 'Switch to another slot', () => _switchSlot(lobby)),
           if (host['can_unpublish'] == true) item(LucideIcons.eyeOff, 'Unpublish lobby', _unpublish),
           if (host['can_cancel'] == true) item(LucideIcons.x, 'Cancel match', _cancelMatch, color: C.redInk),

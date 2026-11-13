@@ -24,7 +24,7 @@ class MyBookingsScreen extends StatelessWidget {
     // refresh whenever the player switches to this tab
     child: BlocListener<AppCubit, AppState>(
       listenWhen: (prev, cur) => cur.tab == AppTab.bookings && prev.tab != AppTab.bookings,
-      listener: (context, _) => context.read<MyBookingsCubit>().load(),
+      listener: (context, _) => context.read<MyBookingsCubit>().reload(),
       child: const _MyBookingsView(),
     ),
   );
@@ -300,7 +300,10 @@ class _MyBookingsView extends StatelessWidget {
                     bg: C.mint,
                     fg: C.green700,
                     border: Colors.transparent,
-                    onTap: () => openSlotBooking(context, b['venue']['id'], sportId: b['sport']['id']),
+                    onTap: () async {
+                      await openSlotBooking(context, b['venue']['id'], sportId: b['sport']['id']);
+                      if (context.mounted) context.read<MyBookingsCubit>().load();
+                    },
                   ),
                 ],
                 if (status == 'cancelled')

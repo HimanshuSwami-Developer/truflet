@@ -24,7 +24,7 @@ class MyMatchesScreen extends StatelessWidget {
     // refresh whenever the player switches to this tab
     child: BlocListener<AppCubit, AppState>(
       listenWhen: (prev, cur) => cur.tab == AppTab.matches && prev.tab != AppTab.matches,
-      listener: (context, _) => context.read<MyMatchesCubit>().load(),
+      listener: (context, _) => context.read<MyMatchesCubit>().reload(),
       child: const _MyMatchesView(),
     ),
   );

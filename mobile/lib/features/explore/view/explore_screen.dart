@@ -30,7 +30,12 @@ class ExploreScreen extends StatelessWidget {
       lobbies: c.read<LobbyRepository>(),
       app: c.read<AppCubit>(),
     )..load(),
-    child: const _ExploreView(),
+    // refresh whenever the player switches back to this tab
+    child: BlocListener<AppCubit, AppState>(
+      listenWhen: (prev, cur) => cur.tab == AppTab.explore && prev.tab != AppTab.explore,
+      listener: (context, _) => context.read<ExploreCubit>().reload(),
+      child: const _ExploreView(),
+    ),
   );
 }
 
@@ -500,7 +505,10 @@ class _ExploreView extends StatelessWidget {
 
   /// The city board: public lobbies with open spots.
   List<Widget> _cityBoard(BuildContext context, List<Json> lobbies, AppState s) {
-    void openBoard() => context.pushLobbies(LobbiesArgs(areaId: s.areaId, cityName: s.cityName));
+    Future<void> openBoard() async {
+      await context.pushLobbies(LobbiesArgs(areaId: s.areaId, cityName: s.cityName));
+      if (context.mounted) context.read<ExploreCubit>().load();
+    }
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
@@ -623,7 +631,10 @@ class _ExploreView extends StatelessWidget {
           Material(
             color: Colors.white,
             child: InkWell(
-              onTap: () => context.pushVenue(v['id']),
+              onTap: () async {
+                await context.pushVenue(v['id']); // favourites, open-lobby counts may change there
+                if (context.mounted) context.read<ExploreCubit>().load();
+              },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

@@ -20,7 +20,7 @@ class RequestThreadCubit extends Cubit<RequestThreadState> {
   final LobbyRepository _repo;
   final int lobbyId, requestId;
   Timer? _poll;
-  int _tick = 0;
+  bool _busy = false; // a slow poll never overlaps the next one
 
   RequestThreadCubit({required this.lobbyId, required this.requestId, required LobbyRepository repository})
     : _repo = repository,
@@ -37,15 +37,19 @@ class RequestThreadCubit extends Cubit<RequestThreadState> {
     }
   }
 
+  /// Every poll re-reads the request too, so "Approved" / "Declined" shows up within seconds.
   Future<void> _refresh() async {
-    if (isClosed) return;
-    _tick++;
+    if (isClosed || _busy) return;
+    _busy = true;
     try {
       final last = state.messages.isEmpty ? null : state.messages.last['id'] as int;
       final fresh = await _repo.threadMessages(lobbyId, requestId, after: last);
-      final req = fresh.isNotEmpty || _tick % 3 == 0 ? await _repo.request(lobbyId, requestId) : state.request;
+      final req = await _repo.request(lobbyId, requestId);
       _emit(RequestThreadState(request: req, messages: [...state.messages, ...fresh]));
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _busy = false;
+    }
   }
 
   Future<String?> send(String body) async {

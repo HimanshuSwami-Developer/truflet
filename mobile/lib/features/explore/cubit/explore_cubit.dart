@@ -74,6 +74,12 @@ class ExploreCubit extends Cubit<ExploreState> {
     }
   }
 
+  /// Fresh fetch that shows the venue skeleton again (used when the player returns to the tab).
+  Future<void> reload() async {
+    _emit(state.copyWith(venues: null, error: null));
+    await load();
+  }
+
   void selectSport(int? id) {
     _emit(state.copyWith(sportId: id));
     load();

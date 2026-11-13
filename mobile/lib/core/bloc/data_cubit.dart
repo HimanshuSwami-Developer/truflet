@@ -20,6 +20,13 @@ class DataCubit<T> extends Cubit<DataState<T>> {
     }
   }
 
+  /// Fresh fetch that shows the skeleton again (used when the player returns to a tab).
+  Future<void> reload() async {
+    if (isClosed) return;
+    emit(DataState<T>());
+    await load();
+  }
+
   /// Clears the error (back to the spinner) and loads again.
   void retry() {
     if (isClosed) return;

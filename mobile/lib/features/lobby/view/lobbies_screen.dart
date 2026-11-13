@@ -33,7 +33,11 @@ class LobbiesScreen extends StatelessWidget {
 /// Opens the right place for a lobby: the Match Room, my request thread, or the request sheet.
 Future<void> openLobby(BuildContext context, Json lobby, {VoidCallback? onChanged}) async {
   final role = lobby['my_role'];
-  if (role == 'host' || role == 'member') return context.pushMatch(lobby['id']);
+  if (role == 'host' || role == 'member') {
+    await context.pushMatch(lobby['id']);
+    onChanged?.call();
+    return;
+  }
   if (role == 'invited') {
     final accepted = await sheet<bool>(context, (_) => _InviteSheet(lobby: lobby));
     onChanged?.call();
@@ -44,9 +48,11 @@ Future<void> openLobby(BuildContext context, Json lobby, {VoidCallback? onChange
     return;
   }
   if (role == 'requested' && lobby['my_request_id'] != null) {
-    return context.pushRequestThread(lobby['id'], lobby['my_request_id']);
+    await context.pushRequestThread(lobby['id'], lobby['my_request_id']);
+    onChanged?.call();
+    return;
   }
-  if (role == 'declined' || (lobby['spots_left'] ?? 0) <= 0) return;
+  if ((lobby['spots_left'] ?? 0) <= 0) return; // declined players may ask again while there's room
   if (!await requireProfile(context) || !context.mounted) return;
   final req = await sheet<Json>(context, (_) => _RequestSheet(lobby: lobby));
   onChanged?.call();
@@ -252,7 +258,12 @@ class _RequestSheetState extends State<_RequestSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Request to join', style: d(22)),
+        Text(g['my_role'] == 'declined' ? 'Request again' : 'Request to join', style: d(22)),
+        if (g['my_role'] == 'declined')
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text('The host declined you last time — you can ask once more.', style: t(13, c: C.muted)),
+          ),
         const SizedBox(height: 6),
         Text('${g['sport']['name']} · ${g['date_label']} · ${g['time_label']}', style: t(14, c: C.muted)),
         const SizedBox(height: 14),

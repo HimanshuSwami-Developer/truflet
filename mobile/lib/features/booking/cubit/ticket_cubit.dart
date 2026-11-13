@@ -12,13 +12,6 @@ class TicketCubit extends DataCubit<Json> {
     : _repo = repository,
       super(() => repository.details(bookingId));
 
-  /// Back to the spinner and fetch again (after a cancel or reschedule).
-  Future<void> reload() async {
-    if (isClosed) return;
-    emit(const DataState<Json>());
-    await load();
-  }
-
   Future<Json> cancelQuote() => _repo.cancelQuote(bookingId);
 
   Future<Json> cancel() => _repo.cancel(bookingId);

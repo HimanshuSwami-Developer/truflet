@@ -46,13 +46,19 @@ class _SystemNote extends StatelessWidget {
   const _SystemNote(this.m);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
+    padding: const EdgeInsets.symmetric(vertical: 3),
     child: Center(
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 320),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(color: C.segment, borderRadius: BorderRadius.circular(12)),
-        child: Text(m['body'] ?? '', textAlign: TextAlign.center, style: t(12, c: C.mutedInk, h: 1.4)),
+        constraints: const BoxConstraints(maxWidth: 280),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: C.segment, borderRadius: BorderRadius.circular(999)),
+        child: Text(
+          m['body'] ?? '',
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: t(11, c: C.mutedInk, h: 1.3),
+        ),
       ),
     ),
   );
@@ -99,7 +105,7 @@ class _Bubble extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text(sender['name'] ?? '', style: t(12, w: FontWeight.w700, c: C.green700)),
                     ),
-                  Text(m['body'] ?? '', style: t(14, c: mine ? Colors.white : C.ink, h: 1.4)),
+                  _ExpandableText(m['body'] ?? '', style: t(14, c: mine ? Colors.white : C.ink, h: 1.4), mine: mine),
                   const SizedBox(height: 2),
                   Align(
                     alignment: Alignment.bottomRight,
@@ -129,6 +135,7 @@ class PaymentCard extends StatelessWidget {
     final open = status == 'pending';
     final mine = card['is_me'] == true;
     final until = DateTime.tryParse(card['pay_by'] ?? '');
+    if (!(open && mine && onPay != null)) return _compact(card, paid: paid, open: open, until: until);
     final (bg, border) = paid
         ? (C.mint, const Color(0xFFBBF7D0))
         : open
@@ -180,9 +187,7 @@ class PaymentCard extends StatelessWidget {
               paid
                   ? 'Held safely in Turflet escrow.'
                   : open
-                  ? (until != null
-                        ? 'UPI · pay within 15 minutes or the spot reopens for someone else.'
-                        : 'UPI · paid into escrow, never to the host directly.')
+                  ? (until != null ? 'Pay within 15 min or the spot reopens' : 'Paid into escrow, never to the host')
                   : 'This spot was released.',
               style: t(12, c: C.muted, h: 1.4),
             ),
@@ -195,6 +200,96 @@ class PaymentCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// One-line card for other players' payments (and my settled ones): name · amount · status.
+Widget _compact(Json card, {required bool paid, required bool open, DateTime? until}) {
+  final mine = card['is_me'] == true;
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: paid ? C.mint : (open ? Colors.white : C.chip),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: paid ? C.mint : C.line),
+      ),
+      child: Row(
+        children: [
+          Icon(paid ? LucideIcons.circleCheck : LucideIcons.wallet, size: 15, color: paid ? C.green700 : C.muted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${mine ? 'You' : card['name']} · ${inr(card['amount'])}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: t(13, w: FontWeight.w600),
+            ),
+          ),
+          if (paid)
+            Text('Paid', style: t(12, w: FontWeight.w700, c: C.green700))
+          else if (open && until != null)
+            Countdown(
+              until: until,
+              builder: (_, left) => Text(
+                'Due · ${mmss(left)}',
+                style: t(12, w: FontWeight.w600, c: left.inMinutes < 5 ? C.redInk : C.amber),
+              ),
+            )
+          else if (open)
+            Text('Due', style: t(12, w: FontWeight.w600, c: C.amber))
+          else
+            Text('Closed', style: t(12, c: C.muted)),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Long messages show 6 lines with "Read more"; tap to expand.
+class _ExpandableText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+  final bool mine;
+  const _ExpandableText(this.text, {required this.style, required this.mine});
+  @override
+  State<_ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<_ExpandableText> {
+  static const _lines = 6;
+  bool open = false;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final tp = TextPainter(
+        text: TextSpan(text: widget.text, style: widget.style),
+        maxLines: _lines,
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout(maxWidth: box.maxWidth);
+      final long = tp.didExceedMaxLines;
+      tp.dispose();
+      if (!long) return Text(widget.text, style: widget.style);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.text, style: widget.style, maxLines: open ? null : _lines, overflow: open ? null : TextOverflow.ellipsis),
+          GestureDetector(
+            onTap: () => setState(() => open = !open),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                open ? 'Show less' : 'Read more',
+                style: t(12, w: FontWeight.w700, c: widget.mine ? Colors.white : C.brand),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 /// Text field + send button pinned above the keyboard.

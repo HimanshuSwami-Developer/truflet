@@ -166,7 +166,8 @@ class ScreeningTests(MatchTestCase):
         self.api(self.host).post(f"/api/v1/lobbies/{lb['id']}/requests/{rid}/decline/")
         r = self.api(self.solo).post(f"/api/v1/lobbies/{lb['id']}/requests/{rid}/messages/", {"body": "pls"})
         self.assertEqual(r.status_code, 400)
-        self.assertEqual(self.api(self.solo).post(f"/api/v1/lobbies/{lb['id']}/request/").status_code, 400)
+        # asking again reopens the same thread (see ReRequestTests)
+        self.assertEqual(self.api(self.solo).post(f"/api/v1/lobbies/{lb['id']}/request/").status_code, 201)
 
     def test_unpaid_spot_reopens_after_15_minutes(self):
         lb = self.create()
@@ -394,3 +395,16 @@ class InviteAndLockTests(MatchTestCase):
     def test_only_host_can_lock(self):
         lb = self.create(booking_mode="book_recover")
         self.assertEqual(self.api(self.friend).post(f"/api/v1/lobbies/{lb['id']}/lock/").status_code, 400)
+
+
+class ReRequestTests(MatchTestCase):
+    def test_declined_player_can_request_again(self):
+        lb = self.create()
+        r = self.api(self.solo).post(f"/api/v1/lobbies/{lb['id']}/request/", {"message": "hi"}, format="json")
+        rid = r.data["id"]
+        self.assertEqual(self.api(self.host).post(f"/api/v1/lobbies/{lb['id']}/requests/{rid}/decline/").status_code, 200)
+        self.assertEqual(self.api(self.solo).get(f"/api/v1/lobbies/{lb['id']}/").data["my_role"], "declined")
+        again = self.api(self.solo).post(f"/api/v1/lobbies/{lb['id']}/request/", {"message": "Please?"}, format="json")
+        self.assertEqual(again.status_code, 201, again.data)
+        self.assertEqual((again.data["id"], again.data["status"]), (rid, "pending"))
+        self.assertEqual(self.api(self.host).post(f"/api/v1/lobbies/{lb['id']}/requests/{rid}/approve/").status_code, 200)

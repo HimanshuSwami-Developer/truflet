@@ -1,6 +1,8 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Device-local settings that survive restarts: onboarding flag and the chosen area.
+/// Device-local settings that survive restarts: onboarding flag, the chosen area and the last-seen profile.
 class AppPreferences {
   static const _onboarded = 'onboarded';
   static const _areaId = 'areaId';
@@ -8,6 +10,7 @@ class AppPreferences {
   static const _cityName = 'cityName';
   static const _lat = 'lat';
   static const _lng = 'lng';
+  static const _user = 'user';
 
   Future<SavedLocation> read() async {
     final p = await SharedPreferences.getInstance();
@@ -19,6 +22,23 @@ class AppPreferences {
       lat: p.getDouble(_lat),
       lng: p.getDouble(_lng),
     );
+  }
+
+  /// Last profile fetched from the server, so a restart shows the player signed in straight away
+  /// even before (or without) the network answering.
+  Future<Map<String, dynamic>?> readUser() async {
+    final raw = (await SharedPreferences.getInstance()).getString(_user);
+    if (raw == null) return null;
+    try {
+      return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveUser(Map<String, dynamic>? user) async {
+    final p = await SharedPreferences.getInstance();
+    user == null ? await p.remove(_user) : await p.setString(_user, jsonEncode(user));
   }
 
   Future<void> setOnboarded() async => (await SharedPreferences.getInstance()).setBool(_onboarded, true);

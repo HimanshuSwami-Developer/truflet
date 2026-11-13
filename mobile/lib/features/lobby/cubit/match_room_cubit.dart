@@ -34,6 +34,7 @@ class MatchRoomCubit extends Cubit<MatchRoomState> {
   final int lobbyId;
   Timer? _poll;
   int _tick = 0;
+  bool _busy = false; // a slow poll never overlaps the next one
 
   MatchRoomCubit({required this.lobbyId, required LobbyRepository repository})
     : _repo = repository,
@@ -53,20 +54,27 @@ class MatchRoomCubit extends Cubit<MatchRoomState> {
     }
   }
 
+  /// Every poll refreshes the lobby (members, paid count, status, alerts) and new chat; payment
+  /// cards change state in place (paid / expired), so the full chat is re-read every few polls.
   Future<void> _refresh() async {
-    if (isClosed || !state.inRoom) return;
+    if (isClosed || _busy) return;
+    _busy = true;
     _tick++;
     try {
-      final last = state.messages.isEmpty ? null : state.messages.last['id'] as int;
-      final fresh = await _repo.messages(lobbyId, after: last);
-      // payment cards change state (paid / expired), so refresh the room every few ticks
-      if (fresh.isNotEmpty || _tick % 3 == 0) {
-        final lobby = await _repo.lobby(lobbyId);
-        final all = fresh.isEmpty || _tick % 3 == 0 ? await _repo.messages(lobbyId) : [...state.messages, ...fresh];
-        _emit(state.copyWith(lobby: lobby, messages: all));
-        if (state.isHost && _tick % 3 == 0 && lobby['is_public'] == true) await loadRequests();
+      final lobby = await _repo.lobby(lobbyId);
+      if (lobby['members'] == null) {
+        _emit(state.copyWith(lobby: lobby)); // outside the room (removed, invited, ended): card only
+        return;
       }
-    } catch (_) {}
+      final last = state.messages.isEmpty ? null : state.messages.last['id'] as int;
+      final full = last == null || _tick % 3 == 0;
+      final msgs = full ? await _repo.messages(lobbyId) : [...state.messages, ...await _repo.messages(lobbyId, after: last)];
+      _emit(state.copyWith(lobby: lobby, messages: msgs));
+      if (lobby['my_role'] == 'host' && lobby['is_public'] == true) await loadRequests();
+    } catch (_) {
+    } finally {
+      _busy = false;
+    }
   }
 
   Future<void> reload() async {

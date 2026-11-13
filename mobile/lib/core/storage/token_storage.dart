@@ -8,6 +8,9 @@ class TokenStorage {
   String? access;
   String? refresh;
 
+  /// Called after the tokens are wiped (sign-out, or the server rejected the refresh token).
+  void Function()? onCleared;
+
   bool get hasAccess => access != null;
 
   Future<void> load() async {
@@ -29,5 +32,6 @@ class TokenStorage {
     final p = await SharedPreferences.getInstance();
     await p.remove(_accessKey);
     await p.remove(_refreshKey);
+    onCleared?.call();
   }
 }

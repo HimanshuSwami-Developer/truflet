@@ -418,9 +418,11 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
                         bg: C.limeSoft,
                         fg: C.green900,
                         border: Colors.transparent,
-                        onTap: () => context.pushLobbies(
-                          LobbiesArgs(venue: v, subtitle: '${v['name']} · ${v['area']}'),
-                        ),
+                        onTap: () async {
+                          final cubit = context.read<VenueDetailsCubit>();
+                          await context.pushLobbies(LobbiesArgs(venue: v, subtitle: '${v['name']} · ${v['area']}'));
+                          if (!cubit.isClosed) cubit.load();
+                        },
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -434,7 +436,11 @@ class _VenueDetailsViewState extends State<_VenueDetailsView> {
                       trailing: const Icon(LucideIcons.calendarClock, color: Colors.white, size: 18),
                       onTap: cur == null
                           ? null
-                          : () => context.pushSlotBooking(SlotBookingArgs(venue: v, initialSportId: cur['sport_id'])),
+                          : () async {
+                              final cubit = context.read<VenueDetailsCubit>();
+                              await context.pushSlotBooking(SlotBookingArgs(venue: v, initialSportId: cur['sport_id']));
+                              if (!cubit.isClosed) cubit.load();
+                            },
                     ),
                   ),
                 ],

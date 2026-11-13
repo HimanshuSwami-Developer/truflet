@@ -31,6 +31,12 @@ class MyBookingsCubit extends Cubit<MyBookingsState> {
     }
   }
 
+  /// Fresh fetch that shows the skeleton again (used when the player returns to the tab).
+  Future<void> reload() async {
+    _emit(MyBookingsState(tab: state.tab));
+    await load();
+  }
+
   void selectTab(int i) {
     _emit(MyBookingsState(tab: i, data: state.data, error: state.error));
     load();

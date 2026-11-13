@@ -161,7 +161,7 @@ class LobbyCard extends StatelessWidget {
       'host' => ('Your match', C.chip, C.mutedInk),
       'member' => ('Open room', C.mint, C.green700),
       'requested' => ('Requested', C.amberSoft, C.amber),
-      'declined' => ('Declined', C.chip, C.muted),
+      'declined' => (left == 0 ? 'Full' : 'Request again', left == 0 ? C.chip : C.brand, left == 0 ? C.muted : Colors.white),
       _ => (left == 0 ? 'Full' : 'Request to join', left == 0 ? C.chip : C.brand, left == 0 ? C.muted : Colors.white),
     };
     return Material(
@@ -245,7 +245,7 @@ class LobbyCard extends StatelessWidget {
                       bg: bg,
                       fg: fg,
                       border: Colors.transparent,
-                      onTap: role == null && left == 0 || role == 'declined' ? null : onAction,
+                      onTap: (role == null || role == 'declined') && left == 0 ? null : onAction,
                     ),
                 ],
               ),

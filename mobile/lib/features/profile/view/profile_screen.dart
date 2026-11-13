@@ -24,7 +24,7 @@ class ProfileScreen extends StatelessWidget {
     // refresh the profile whenever the player switches to this tab
     child: BlocListener<AppCubit, AppState>(
       listenWhen: (prev, cur) => cur.tab == AppTab.profile && prev.tab != AppTab.profile,
-      listener: (context, _) => context.read<AppCubit>().refreshMe(),
+      listener: (context, _) => context.read<ProfileCubit>().refresh(),
       child: const _ProfileView(),
     ),
   );
@@ -106,7 +106,7 @@ class _ProfileViewState extends State<_ProfileView> {
     final app = context.watch<AppCubit>();
     final s = app.state;
     final u = s.user;
-    if (u == null) return const ProfileSkeleton();
+    if (u == null || context.watch<ProfileCubit>().state) return const ProfileSkeleton();
     final top = MediaQuery.of(context).padding.top;
     final stats = asMap(u['stats']);
     final sports = asList(u['sports']);

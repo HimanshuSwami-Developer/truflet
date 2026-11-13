@@ -22,10 +22,23 @@ class AppCubit extends Cubit<AppState> {
     required UserRepository userRepository,
   }) : _configRepo = configRepository,
        _userRepo = userRepository,
-       super(const AppState());
+       super(const AppState()) {
+    // the session ended underneath us (e.g. refresh token expired) → show the signed-out state
+    _tokens.onCleared = () {
+      if (!isClosed && state.user != null) emit(state.copyWith(user: null, saved: const {}, tab: 0));
+    };
+  }
 
-  /// Signed in = holds an access token AND the profile has loaded.
-  bool get loggedIn => _tokens.hasAccess && state.user != null;
+  /// Signed in = holds a token. The profile may still be loading (screens show a skeleton until it
+  /// arrives); only the server rejecting the token (401 after a failed refresh) signs the player out.
+  bool get loggedIn => _tokens.hasAccess;
+
+  /// Keeps the cached profile in step with the session.
+  @override
+  void onChange(Change<AppState> change) {
+    super.onChange(change);
+    if (!identical(change.currentState.user, change.nextState.user)) _prefs.saveUser(change.nextState.user);
+  }
 
   /// Restores the saved area and session, then loads config, sports and the profile.
   /// Network failures are swallowed so the app still opens offline.
@@ -42,6 +55,13 @@ class AppCubit extends Cubit<AppState> {
       ),
     );
     await _tokens.load();
+    if (_tokens.hasAccess) {
+      // show the player signed in immediately; refreshMe below brings it up to date
+      final cached = await _prefs.readUser();
+      if (cached != null) emit(state.copyWith(user: cached));
+    } else {
+      await _prefs.saveUser(null);
+    }
     await Future.wait([
       _quietly(() async => emit(state.copyWith(config: await _configRepo.config()))),
       _quietly(() async => emit(state.copyWith(sports: await _configRepo.sports()))),
@@ -63,12 +83,13 @@ class AppCubit extends Cubit<AppState> {
     } catch (_) {}
   }
 
+  /// Network errors and server hiccups keep the session (and the cached profile) as is.
   Future<void> refreshMe() async {
     try {
       final me = await _userRepo.me();
       emit(state.copyWith(user: me));
     } on ApiError catch (e) {
-      if (e.status == 401) await logout();
+      if (e.status == 401 && !_tokens.hasAccess) await logout();
     }
   }
 

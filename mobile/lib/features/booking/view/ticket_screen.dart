@@ -529,7 +529,11 @@ class _TicketViewState extends State<_TicketView> {
               icon: LucideIcons.messagesSquare,
               height: 46,
               radius: 14,
-              onTap: () => context.pushMatch(lobby['id']),
+              onTap: () async {
+                final cubit = context.read<TicketCubit>();
+                await context.pushMatch(lobby['id']);
+                if (!cubit.isClosed) cubit.load();
+              },
             ),
           ],
         ),
