@@ -142,7 +142,7 @@ Widget perHead(Json lobby, {double size = 18}) {
 }
 
 /// Screen 3 card: host reliability, Turf Locked vs Crowdfunding, filled vs open spots, per-head cost and
-/// a role-aware action (Request to join / Requested / Open Match Room).
+/// a role-aware action (Request to join / Accept invite / Requested / Open Match Room).
 class LobbyCard extends StatelessWidget {
   final Json lobby;
   final VoidCallback? onAction;
@@ -161,6 +161,7 @@ class LobbyCard extends StatelessWidget {
       'host' => ('Your match', C.chip, C.mutedInk),
       'member' => ('Open room', C.mint, C.green700),
       'requested' => ('Requested', C.amberSoft, C.amber),
+      'invited' => ('Accept invite', C.coral, Colors.white),
       'declined' => (left == 0 ? 'Full' : 'Request again', left == 0 ? C.chip : C.brand, left == 0 ? C.muted : Colors.white),
       _ => (left == 0 ? 'Full' : 'Request to join', left == 0 ? C.chip : C.brand, left == 0 ? C.muted : Colors.white),
     };
@@ -206,7 +207,10 @@ class LobbyCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hosted by ${host['name'] ?? ''}', style: t(13, w: FontWeight.w600)),
+                        Text(
+                          role == 'invited' ? '${host['name'] ?? ''} invited you' : 'Hosted by ${host['name'] ?? ''}',
+                          style: t(13, w: FontWeight.w600, c: role == 'invited' ? C.orangeInk : C.ink),
+                        ),
                         Row(
                           children: [
                             Icon(

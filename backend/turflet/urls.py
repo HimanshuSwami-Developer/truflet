@@ -24,6 +24,8 @@ api = [
     path("policies/", core.policies),
     path("notifications/", core.notifications),
     path("notifications/read/", core.notifications_read),
+    path("devices/", core.devices),
+    path("devices/remove/", core.devices_remove),
     path("support/tickets/", core.tickets),
     # venues
     path("cities/", venues.cities),

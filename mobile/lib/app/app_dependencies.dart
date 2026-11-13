@@ -11,6 +11,7 @@ import '../data/repositories/notification_repository.dart';
 import '../data/repositories/support_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/repositories/venue_repository.dart';
+import 'push/push_service.dart';
 import 'session/app_cubit.dart';
 
 /// Builds the object graph once per app start: config → storage → API client → repositories → AppCubit.
@@ -29,6 +30,8 @@ class AppDependencies {
   final NotificationRepository notifications;
   final SupportRepository support;
   final LobbyRepository lobbies;
+
+  late final PushService push = PushService(notifications);
 
   late final AppCubit appCubit = AppCubit(tokens: tokens, prefs: preferences, configRepository: appConfig, userRepository: users);
 

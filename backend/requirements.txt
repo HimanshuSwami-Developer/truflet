@@ -11,3 +11,5 @@ psycopg==3.3.8
 psycopg-binary==3.3.8
 python-dotenv==1.2.4
 whitenoise==6.12.0
+google-auth==2.62.2
+requests==2.34.2

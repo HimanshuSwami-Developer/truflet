@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
-from .models import FAQ, AppConfig, Notification, PolicySection, RefundRule, SupportTicket
+from .models import FAQ, AppConfig, DeviceToken, Notification, PolicySection, RefundRule, SupportTicket
 
 
 def exception_handler(exc, context):
@@ -118,6 +118,27 @@ def notifications(request):
 @permission_classes([permissions.IsAuthenticated])
 def notifications_read(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def devices(request):
+    """Registers this device's FCM token for the signed-in player (moves it from any previous player)."""
+    token = str(request.data.get("token") or "").strip()
+    if not token or len(token) > 512:
+        return Response({"message": "A device token is required."}, status=status.HTTP_400_BAD_REQUEST)
+    DeviceToken.objects.update_or_create(
+        token=token, defaults={"user": request.user, "platform": str(request.data.get("platform") or "")[:20]})
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def devices_remove(request):
+    """Stops pushes to a device. Open (no session needed) so it works right after sign-out;
+    knowing the token is what proves it's this device."""
+    DeviceToken.objects.filter(token=str(request.data.get("token") or "").strip()).delete()
     return Response({"ok": True})
 
 

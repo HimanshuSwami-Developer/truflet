@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "307957134927",
+    "project_id": "truflet-ee1e9",
+    "storage_bucket": "truflet-ee1e9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:307957134927:android:48f2a5f9e9feac0672dc3a",
+        "android_client_info": {
+          "package_name": "com.truflet.app.developer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEjmKLPLC146jOg6ttW5Z1UlFSY7tbJE0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

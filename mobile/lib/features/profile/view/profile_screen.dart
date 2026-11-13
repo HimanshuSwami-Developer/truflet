@@ -111,59 +111,67 @@ class _ProfileViewState extends State<_ProfileView> {
     final stats = asMap(u['stats']);
     final sports = asList(u['sports']);
     final area = u['home_area'] == null ? (s.cityName.isNotEmpty ? s.cityName : s.areaName) : u['home_area']['city'];
-    return RefreshIndicator(
-      color: C.brand,
-      onRefresh: app.refreshMe,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 20),
-        children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(20, top + 16, 20, 70),
-            decoration: const BoxDecoration(
-              color: C.brand,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  right: -80,
-                  top: -56 - top,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(color: C.lime.withValues(alpha: 0.18), shape: BoxShape.circle),
-                  ),
+    // Header + profile card stay pinned; the sections below scroll (and pull to refresh).
+    return Column(
+      children: [
+        Stack(
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: top + 126,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: C.brand,
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
                 ),
-                Row(
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: Text('My profile', style: d(22, c: Colors.white)),
-                    ),
-                    GhostButton(
-                      editing ? 'Done' : 'Edit profile',
-                      height: 40,
-                      radius: 12,
-                      fontSize: 13,
-                      fg: Colors.white,
-                      bg: Colors.white.withValues(alpha: 0.18),
-                      border: Colors.transparent,
-                      onTap: () => setState(() => editing = !editing),
+                    Positioned(
+                      right: -60,
+                      top: -40,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(color: C.lime.withValues(alpha: 0.18), shape: BoxShape.circle),
+                      ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-          Transform.translate(
-            offset: const Offset(0, -56),
-            child: Column(
+            Column(
               children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20, top + 16, 20, 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text('My profile', style: d(22, c: Colors.white)),
+                      ),
+                      GhostButton(
+                        editing ? 'Done' : 'Edit profile',
+                        height: 40,
+                        radius: 12,
+                        fontSize: 13,
+                        fg: Colors.white,
+                        bg: Colors.white.withValues(alpha: 0.18),
+                        border: Colors.transparent,
+                        onTap: () => setState(() => editing = !editing),
+                      ),
+                    ],
+                  ),
+                ),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: shadowBig),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: shadowBig,
+                  ),
                   child: Column(
                     children: [
                       GestureDetector(
@@ -209,7 +217,10 @@ class _ProfileViewState extends State<_ProfileView> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text((u['name'] ?? '').toString().isEmpty ? 'Add your name' : u['name'], style: d(20)),
+                                  Text(
+                                    (u['name'] ?? '').toString().isEmpty ? 'Add your name' : u['name'],
+                                    style: d(20),
+                                  ),
                                   const SizedBox(height: 3),
                                   Text(
                                     '${(u['handle'] ?? '').toString().isEmpty ? '' : '@${u['handle']} · '}$area',
@@ -235,12 +246,26 @@ class _ProfileViewState extends State<_ProfileView> {
                           border: Border(top: BorderSide(color: C.divider)),
                         ),
                         child: Row(
-                          children: [_stat('${stats['games'] ?? 0}', 'Games'), _stat('${stats['hours'] ?? 0}h', 'Played')],
+                          children: [
+                            _stat('${stats['games'] ?? 0}', 'Games'),
+                            _stat('${stats['hours'] ?? 0}h', 'Played'),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ],
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            color: C.brand,
+            onRefresh: app.refreshMe,
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 20),
+              children: [
                 CardBox(
                   margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
@@ -387,12 +412,19 @@ class _ProfileViewState extends State<_ProfileView> {
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _detail(IconData icon, String label, dynamic value, String placeholder, {bool verified = false, bool last = false}) {
+  Widget _detail(
+    IconData icon,
+    String label,
+    dynamic value,
+    String placeholder, {
+    bool verified = false,
+    bool last = false,
+  }) {
     final empty = (value ?? '').toString().trim().isEmpty;
     return InkWell(
       onTap: verified ? null : _editDetails,
@@ -534,38 +566,39 @@ class _ProfileViewState extends State<_ProfileView> {
     ),
   );
 
-  Widget _menu(IconData icon, Color fg, Color bg, String label, String sub, VoidCallback onTap, {bool last = false}) => InkWell(
-    onTap: onTap,
-    child: Container(
-      constraints: const BoxConstraints(minHeight: 62),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: last
-          ? null
-          : const BoxDecoration(
-              border: Border(bottom: BorderSide(color: C.divider)),
-            ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 18, color: fg),
+  Widget _menu(IconData icon, Color fg, Color bg, String label, String sub, VoidCallback onTap, {bool last = false}) =>
+      InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 62),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: last
+              ? null
+              : const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: C.divider)),
+                ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, size: 18, color: fg),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(label, style: t(14, w: FontWeight.w600)),
+                    Text(sub, style: t(12, c: C.muted)),
+                  ],
+                ),
+              ),
+              const Icon(LucideIcons.chevronRight, size: 18, color: C.muted),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(label, style: t(14, w: FontWeight.w600)),
-                Text(sub, style: t(12, c: C.muted)),
-              ],
-            ),
-          ),
-          const Icon(LucideIcons.chevronRight, size: 18, color: C.muted),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }

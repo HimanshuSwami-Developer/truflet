@@ -156,7 +156,27 @@ class Notification(TimeStamped):
         return self.title
 
 
+class DeviceToken(TimeStamped):
+    """An FCM registration token for push notifications. One row per device: signing in on a
+    device moves its token to the new player."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="devices")
+    token = models.CharField(max_length=512, unique=True)
+    platform = models.CharField(max_length=20, blank=True)
+
+    def __str__(self):
+        return f"{self.user} · {self.platform}"
+
+
 def notify(user, title, body="", kind="system"):
+    """Saves an in-app notification and, once the transaction commits, pushes it to the player's devices."""
     if user is None:
         return None
-    return Notification.objects.create(user=user, title=title, body=body, kind=kind)
+    n = Notification.objects.create(user=user, title=title, body=body, kind=kind)
+    if getattr(user, "notifications_on", True):
+        from django.db import transaction
+
+        from .push import send_push
+
+        transaction.on_commit(lambda: send_push(n))
+    return n

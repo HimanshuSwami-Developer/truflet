@@ -16,6 +16,10 @@ Future<void> bootstrap(AppConfig config) async {
     ),
   );
   final deps = AppDependencies(config);
+  await deps.push.init();
   await deps.appCubit.boot();
+  // push token follows the session: registered on sign-in, removed on sign-out
+  deps.push.setSignedIn(deps.appCubit.loggedIn);
+  deps.appCubit.stream.listen((_) => deps.push.setSignedIn(deps.appCubit.loggedIn));
   runApp(TurfletApp(deps: deps));
 }
