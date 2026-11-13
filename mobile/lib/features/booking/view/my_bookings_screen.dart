@@ -156,10 +156,11 @@ class _MyBookingsView extends StatelessWidget {
   Widget _card(BuildContext context, Json b) {
     final status = b['status'];
     final statusStyle = {
+      'held': ('Payment due', C.coralSoft, C.orangeInk),
       'confirmed': ('Confirmed', C.mint, C.green700),
       'completed': ('Completed', C.chip, C.muted),
       'cancelled': (b['refund_amount'] > 0 ? 'Refunded' : 'Cancelled', C.orangeSoft, C.orangeInk),
-    }[status]!;
+    }[status] ?? (status.toString(), C.chip, C.muted);
     final km = b['venue']['area'];
     return Container(
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: shadowCard),
@@ -227,7 +228,7 @@ class _MyBookingsView extends StatelessWidget {
                 Expanded(child: KV('Time', b['time_short'], vSize: 13)),
                 Expanded(
                   child: KV(
-                    status == 'cancelled' ? 'Refund' : 'Paid',
+                    status == 'cancelled' ? 'Refund' : (status == 'held' ? 'Due' : 'Paid'),
                     inr(status == 'cancelled' ? b['refund_amount'] : (b['my_paid'] ?? b['total'])),
                     vSize: 13,
                   ),
@@ -269,6 +270,21 @@ class _MyBookingsView extends StatelessWidget {
                           ),
                         ),
                       ),
+                    ),
+                  ),
+                if (status == 'held')
+                  SizedBox(
+                    width: 112,
+                    child: PrimaryButton(
+                      'Pay now',
+                      height: 40,
+                      radius: 12,
+                      fontSize: 13,
+                      shadow: false,
+                      onTap: () async {
+                        await context.pushPayment(b);
+                        if (context.mounted) context.read<MyBookingsCubit>().load();
+                      },
                     ),
                   ),
                 if (status == 'completed') ...[

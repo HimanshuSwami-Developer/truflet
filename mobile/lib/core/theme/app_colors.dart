@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens from the Turflet design (light sporty palette).
+/// Design tokens drawn from the Turflet logo: deep forest green wordmark, coral ball, warm paper ground.
 class C {
-  static const ink = Color(0xFF10231A);
-  static const muted = Color(0xFF56695E);
-  static const mutedInk = Color(0xFF3F5247);
-  static const ground = Color(0xFFF5F8F3);
-  static const line = Color(0xFFE3E9E1);
-  static const divider = Color(0xFFEEF2EC);
-  static const brand = Color(0xFF16803C);
-  static const brandDark = Color(0xFF0F5E2C);
-  static const green700 = Color(0xFF15803D);
-  static const green900 = Color(0xFF14532D);
-  static const lime = Color(0xFFB7F35A);
-  static const limeSoft = Color(0xFFE3F7C8);
-  static const mint = Color(0xFFDCFCE7);
-  static const chip = Color(0xFFF1F4EF);
-  static const segment = Color(0xFFE8EFE5);
-  static const dashed = Color(0xFFD4DED0);
-  static const radioOff = Color(0xFFA9BAAE);
-  static const dotOff = Color(0xFFC8D3CB);
+  static const ink = Color(0xFF0C2419);
+  static const muted = Color(0xFF5E6B63);
+  static const mutedInk = Color(0xFF3D4B43);
+  static const ground = Color(0xFFF7F5EF);
+  static const line = Color(0xFFE5E2D8);
+  static const divider = Color(0xFFEFECE4);
+  static const brand = Color(0xFF143D2B);
+  static const brandDark = Color(0xFF0B2A1D);
+  static const green700 = Color(0xFF1F5A40);
+  static const green900 = Color(0xFF0F3324);
+
+  /// The logo's ball. Use for the single most important highlight on a screen.
+  static const coral = Color(0xFFF2552C);
+  static const coralSoft = Color(0xFFFFE8E0);
+  static const lime = Color(0xFFFFDCCF);
+  static const limeSoft = Color(0xFFE6EEE7);
+  static const mint = Color(0xFFE9F0EA);
+  static const chip = Color(0xFFF1EEE6);
+  static const segment = Color(0xFFEAE7DE);
+  static const dashed = Color(0xFFD8D4C8);
+  static const radioOff = Color(0xFFAEB5AE);
+  static const dotOff = Color(0xFFCCD0CA);
   static const blue = Color(0xFF1D4ED8);
   static const blueSoft = Color(0xFFDBEAFE);
   static const blueInk = Color(0xFF1E3A8A);
@@ -29,7 +33,7 @@ class C {
   static const amberSoft = Color(0xFFFEF3C7);
   static const teal = Color(0xFF0E7490);
   static const tealSoft = Color(0xFFCFFAFE);
-  static const orange = Color(0xFFC2410C);
+  static const orange = Color(0xFFD9441F);
   static const orangeSoft = Color(0xFFFFEDD5);
   static const orangeInk = Color(0xFF9A3412);
   static const orangeDeep = Color(0xFF7C2D12);

@@ -85,6 +85,8 @@ def booking_payload(request, b):
         cfg = AppConfig.get()
         cutoff = b.start_dt - timedelta(hours=cfg.free_cancel_hours)
         note = countdown(b) if b.hours_left < 24 else f"Free cancellation till {timezone.localtime(cutoff):%-d %b, %-I %p}"
+    elif b.status == "held" and b.held_until:
+        note = f"Pay by {timezone.localtime(b.held_until):%-I:%M %p} or the slot is released"
     elif b.status == "completed":
         note = "How was the pitch?" if not hasattr(b, "review") else f"Played {b.duration} hr{'s' if b.duration > 1 else ''}"
     elif b.status == "cancelled":
@@ -157,8 +159,10 @@ def bookings(request):
     qs = (Booking.objects.filter(mine).distinct()
           .select_related("venue__area__city", "court", "sport", "coupon", "user"))
     tab = request.GET.get("tab", "upcoming")
+    # Upcoming also lists the player's own unpaid holds so they can finish paying from My Bookings.
+    upcoming = Q(status="confirmed") | Q(status="held", held_until__gt=timezone.now(), user=request.user)
     counts = {
-        "upcoming": qs.filter(status="confirmed").count(),
+        "upcoming": qs.filter(upcoming).count(),
         "completed": qs.filter(status="completed").count(),
         "cancelled": qs.filter(status="cancelled").count(),
     }
@@ -167,7 +171,7 @@ def bookings(request):
     elif tab == "cancelled":
         qs = qs.filter(status="cancelled").order_by("-date")
     else:
-        qs = qs.filter(status="confirmed").order_by("date", "start_hour")
+        qs = qs.filter(upcoming).order_by("date", "start_hour")
     return Response({"counts": counts, "items": [booking_payload(request, b) for b in qs]})
 
 

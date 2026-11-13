@@ -75,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   constraints: const BoxConstraints(maxHeight: 420),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
-                    boxShadow: const [BoxShadow(color: Color(0x2910231A), blurRadius: 44, offset: Offset(0, 20))],
+                    boxShadow: const [BoxShadow(color: Color(0x290C2419), blurRadius: 44, offset: Offset(0, 20))],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(32),

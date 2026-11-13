@@ -263,7 +263,7 @@ class _ExploreView extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEA580C),
+                            color: C.coral,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -476,7 +476,7 @@ class _ExploreView extends StatelessWidget {
                     color: on ? fg : Colors.white,
                     borderRadius: BorderRadius.circular(22),
                     border: on ? null : Border.all(color: C.line),
-                    boxShadow: on ? const [BoxShadow(color: Color(0x2E10231A), blurRadius: 18, offset: Offset(0, 8))] : null,
+                    boxShadow: on ? const [BoxShadow(color: Color(0x2E0C2419), blurRadius: 18, offset: Offset(0, 8))] : null,
                   ),
                   child: img == null
                       ? ClipRRect(

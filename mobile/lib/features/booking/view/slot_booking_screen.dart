@@ -143,7 +143,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: const [BoxShadow(color: Color(0x2610231A), blurRadius: 12, offset: Offset(0, 4))],
+                        boxShadow: const [BoxShadow(color: Color(0x260C2419), blurRadius: 12, offset: Offset(0, 4))],
                       ),
                       child: Img(venue['image'], width: 48, height: 48, radius: BorderRadius.circular(12)),
                     ),
@@ -578,7 +578,7 @@ class _SlotBookingViewState extends State<_SlotBookingView> {
             color: bg,
             borderRadius: BorderRadius.circular(12),
             border: border,
-            boxShadow: sel || lobbyPick ? const [BoxShadow(color: Color(0x4716803C), blurRadius: 14, offset: Offset(0, 6))] : null,
+            boxShadow: sel || lobbyPick ? const [BoxShadow(color: Color(0x47143D2B), blurRadius: 14, offset: Offset(0, 6))] : null,
           ),
           child: Stack(
             children: [

@@ -62,8 +62,8 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> with Si
                             color: C.brand,
                             shape: BoxShape.circle,
                             boxShadow: [
-                              BoxShadow(color: Color(0x2616803C), spreadRadius: 10),
-                              BoxShadow(color: Color(0x5916803C), blurRadius: 30, offset: Offset(0, 14)),
+                              BoxShadow(color: Color(0x26143D2B), spreadRadius: 10),
+                              BoxShadow(color: Color(0x40143D2B), blurRadius: 30, offset: Offset(0, 14)),
                             ],
                           ),
                           child: const Icon(LucideIcons.check, color: Colors.white, size: 40),

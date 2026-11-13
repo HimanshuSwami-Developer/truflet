@@ -18,7 +18,7 @@ Future<T?> sheet<T>(BuildContext context, Widget Function(BuildContext) builder)
   context: context,
   isScrollControlled: true,
   backgroundColor: Colors.white,
-  barrierColor: const Color(0x7310231A),
+  barrierColor: const Color(0x730C2419),
   shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
   builder: (ctx) => SingleChildScrollView(
     padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + MediaQuery.of(ctx).viewInsets.bottom),

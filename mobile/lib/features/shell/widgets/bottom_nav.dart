@@ -42,11 +42,26 @@ class BottomNav extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (i == current)
-                        Container(
-                          width: 48,
-                          height: 30,
-                          decoration: BoxDecoration(color: C.mint, borderRadius: BorderRadius.circular(999)),
-                          child: Icon(items[i].$1, size: 20, color: C.brand),
+                        // Active tab echoes the logo mark: forest glyph with the coral ball top-right.
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 30,
+                              decoration: BoxDecoration(color: C.mint, borderRadius: BorderRadius.circular(999)),
+                              child: Icon(items[i].$1, size: 20, color: C.brand),
+                            ),
+                            Positioned(
+                              right: 6,
+                              top: -2,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(color: C.coral, shape: BoxShape.circle),
+                              ),
+                            ),
+                          ],
                         )
                       else
                         SizedBox(height: 30, child: Icon(items[i].$1, size: 22, color: C.muted)),

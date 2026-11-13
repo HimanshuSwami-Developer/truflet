@@ -305,6 +305,12 @@ class _PaymentViewState extends State<_PaymentView> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  'Not ready? Go back and pay later from My Bookings before the hold ends.',
+                  textAlign: TextAlign.center,
+                  style: t(12, c: C.muted),
+                ),
               ],
             ),
           ),

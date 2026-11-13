@@ -43,7 +43,7 @@ class Segmented extends StatelessWidget {
                     color: i == index ? Colors.white : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: i == index
-                        ? const [BoxShadow(color: Color(0x1F10231A), blurRadius: 3, offset: Offset(0, 1))]
+                        ? const [BoxShadow(color: Color(0x1F0C2419), blurRadius: 3, offset: Offset(0, 1))]
                         : null,
                   ),
                   alignment: Alignment.center,
@@ -78,7 +78,7 @@ class Segmented extends StatelessWidget {
                           height: 18,
                           padding: const EdgeInsets.symmetric(horizontal: 5),
                           alignment: Alignment.center,
-                          decoration: BoxDecoration(color: const Color(0xFFEA580C), borderRadius: BorderRadius.circular(999)),
+                          decoration: BoxDecoration(color: C.coral, borderRadius: BorderRadius.circular(999)),
                           child: Text('${badges![i]}', style: t(11, c: Colors.white)),
                         ),
                       ],
