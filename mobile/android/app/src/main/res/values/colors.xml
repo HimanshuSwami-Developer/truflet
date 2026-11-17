@@ -2,4 +2,6 @@
 <resources>
     <!-- tint for the notification glyph (brand forest green) -->
     <color name="notification_color">#143D2B</color>
+    <!-- launch/splash background: the white of the app icon tile, in light and dark mode -->
+    <color name="splash_background">#FFFFFF</color>
 </resources>
