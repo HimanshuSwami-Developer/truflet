@@ -15,12 +15,20 @@ class ChatList extends StatelessWidget {
   /// Tapped "Pay" on my own payment card.
   final VoidCallback? onPay;
   final String emptyText;
-  const ChatList({super.key, required this.messages, required this.controller, this.onPay, this.emptyText = 'Say hi 👋'});
+  const ChatList({
+    super.key,
+    required this.messages,
+    required this.controller,
+    this.onPay,
+    this.emptyText = 'Say hi 👋',
+  });
 
   @override
   Widget build(BuildContext context) {
     if (messages.isEmpty) {
-      return Center(child: Text(emptyText, style: t(14, c: C.muted)));
+      return Center(
+        child: Text(emptyText, style: t(14, c: C.muted)),
+      );
     }
     return ListView.builder(
       controller: controller,
@@ -80,7 +88,9 @@ class _Bubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!mine) ...[
-            showName ? Avatar(sender['initials'] ?? '', size: 28, index: (sender['id'] ?? 0) as int) : const SizedBox(width: 28),
+            showName
+                ? Avatar(sender['initials'] ?? '', size: 28, index: (sender['id'] ?? 0) as int)
+                : const SizedBox(width: 28),
             const SizedBox(width: 8),
           ],
           Flexible(
@@ -103,9 +113,16 @@ class _Bubble extends StatelessWidget {
                   if (!mine && showName)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 2),
-                      child: Text(sender['name'] ?? '', style: t(12, w: FontWeight.w700, c: C.green700)),
+                      child: Text(
+                        sender['name'] ?? '',
+                        style: t(12, w: FontWeight.w700, c: C.green700),
+                      ),
                     ),
-                  _ExpandableText(m['body'] ?? '', style: t(14, c: mine ? Colors.white : C.ink, h: 1.4), mine: mine),
+                  _ExpandableText(
+                    m['body'] ?? '',
+                    style: t(14, c: mine ? Colors.white : C.ink, h: 1.4),
+                    mine: mine,
+                  ),
                   const SizedBox(height: 2),
                   Align(
                     alignment: Alignment.bottomRight,
@@ -227,7 +244,10 @@ Widget _compact(Json card, {required bool paid, required bool open, DateTime? un
             ),
           ),
           if (paid)
-            Text('Paid', style: t(12, w: FontWeight.w700, c: C.green700))
+            Text(
+              'Paid',
+              style: t(12, w: FontWeight.w700, c: C.green700),
+            )
           else if (open && until != null)
             Countdown(
               until: until,
@@ -237,7 +257,10 @@ Widget _compact(Json card, {required bool paid, required bool open, DateTime? un
               ),
             )
           else if (open)
-            Text('Due', style: t(12, w: FontWeight.w600, c: C.amber))
+            Text(
+              'Due',
+              style: t(12, w: FontWeight.w600, c: C.amber),
+            )
           else
             Text('Closed', style: t(12, c: C.muted)),
         ],
@@ -275,7 +298,12 @@ class _ExpandableTextState extends State<_ExpandableText> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.text, style: widget.style, maxLines: open ? null : _lines, overflow: open ? null : TextOverflow.ellipsis),
+          Text(
+            widget.text,
+            style: widget.style,
+            maxLines: open ? null : _lines,
+            overflow: open ? null : TextOverflow.ellipsis,
+          ),
           GestureDetector(
             onTap: () => setState(() => open = !open),
             child: Padding(

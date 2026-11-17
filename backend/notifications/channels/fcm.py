@@ -1,4 +1,4 @@
-"""Firebase Cloud Messaging (HTTP v1) sender.
+"""Push channel: Firebase Cloud Messaging (HTTP v1).
 
 Configure one of:
   FIREBASE_SERVICE_ACCOUNT       the service-account JSON itself (handy on Vercel)
@@ -58,28 +58,28 @@ def _access_token(creds):
         return creds.token
 
 
-def send_push(notification):
-    """Sends a saved Notification to every device of its player. Never raises."""
-    from .models import DeviceToken
+def send(user_id, title, body="", data=None):
+    """Pushes a message to every device of a player. Never raises."""
+    from ..models import DeviceToken
 
     try:
         creds = _load()
         if creds is None:
             return
-        tokens = list(DeviceToken.objects.filter(user_id=notification.user_id).values_list("token", flat=True))
+        tokens = list(DeviceToken.objects.filter(user_id=user_id).values_list("token", flat=True))
         if not tokens:
             return
         headers = {"Authorization": f"Bearer {_access_token(creds)}"}
         url = f"https://fcm.googleapis.com/v1/projects/{_project_id}/messages:send"
         for token in tokens:
-            body = {"message": {
+            body_json = {"message": {
                 "token": token,
-                "notification": {"title": notification.title, "body": notification.body or ""},
-                "data": {"kind": notification.kind, "notification_id": str(notification.pk)},
+                "notification": {"title": title, "body": body or ""},
+                "data": {k: str(v) for k, v in (data or {}).items()},
                 "android": {"priority": "high", "notification": {
                     "channel_id": "turflet_alerts", "icon": "ic_notification", "color": "#143D2B"}},
             }}
-            r = requests.post(url, json=body, headers=headers, timeout=5)
+            r = requests.post(url, json=body_json, headers=headers, timeout=5)
             if r.status_code in (400, 404) and ("UNREGISTERED" in r.text or "INVALID_ARGUMENT" in r.text):
                 DeviceToken.objects.filter(token=token).delete()  # app uninstalled / token rotated
             elif r.status_code >= 300:

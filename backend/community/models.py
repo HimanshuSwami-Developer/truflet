@@ -107,7 +107,15 @@ class Lobby(TimeStamped):
         return self.members.filter(status__in=("pending", "confirmed"))
 
     @property
+    def own_squad(self):
+        """Private and paid in full by the host: the host brings their own players, so every spot is
+        taken even though only the host (and any named guests) are listed."""
+        return not self.is_public and self.payment_rule == "host"
+
+    @property
     def taken(self):
+        if self.own_squad:
+            return self.capacity
         return self.members.filter(status__in=LobbyMember.HOLDS_SPOT).count()
 
     @property

@@ -20,7 +20,8 @@ class RequestThreadScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (c) => RequestThreadCubit(lobbyId: lobbyId, requestId: requestId, repository: c.read<LobbyRepository>())..load(),
+    create: (c) =>
+        RequestThreadCubit(lobbyId: lobbyId, requestId: requestId, repository: c.read<LobbyRepository>())..load(),
     child: const _ThreadView(),
   );
 }
@@ -48,14 +49,11 @@ class _ThreadViewState extends State<_ThreadView> {
     try {
       await _cubit.decide(action);
       if (!mounted) return;
-      toast(
-        context,
-        switch (action) {
-          'approve' => 'Approved — they\'re in the Match Room now.',
-          'decline' => 'Request declined.',
-          _ => 'Request withdrawn.',
-        },
-      );
+      toast(context, switch (action) {
+        'approve' => 'Approved — they\'re in the Match Room now.',
+        'decline' => 'Request declined.',
+        _ => 'Request withdrawn.',
+      });
     } catch (e) {
       if (mounted) toast(context, e.toString());
     } finally {
@@ -250,9 +248,7 @@ class _ThreadViewState extends State<_ThreadView> {
     }
     if (!st.isHost && status == 'pending') {
       return bar([
-        Expanded(
-          child: GhostButton('Withdraw request', height: 46, onTap: busy ? null : () => _decide('withdraw')),
-        ),
+        Expanded(child: GhostButton('Withdraw request', height: 46, onTap: busy ? null : () => _decide('withdraw'))),
       ]);
     }
     if (!st.isHost && status == 'approved') {

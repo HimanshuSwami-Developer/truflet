@@ -36,10 +36,12 @@ extension AppNavigation on BuildContext {
   Future<void> pushRequestThread(int lobbyId, int requestId) => push(AppRoutes.requestOf(lobbyId, requestId));
 
   // ------------------------------------------------------------ replace the current screen
+  Future<void> replaceWithPayment(Json booking) => _replace(AppRoutes.payment, extra: booking);
   Future<void> replaceWithBookingConfirmed(Json booking) => _replace(AppRoutes.bookingConfirmed, extra: booking);
   Future<void> replaceWithTicket(int bookingId) => _replace(AppRoutes.ticketOf(bookingId));
   Future<void> replaceWithMatch(int lobbyId) => _replace(AppRoutes.matchOf(lobbyId));
-  Future<void> replaceWithRequestThread(int lobbyId, int requestId) => _replace(AppRoutes.requestOf(lobbyId, requestId));
+  Future<void> replaceWithRequestThread(int lobbyId, int requestId) =>
+      _replace(AppRoutes.requestOf(lobbyId, requestId));
 
   /// Like Navigator.pushReplacement: the replaced screen's `push` future resolves (with null)
   /// so the screen underneath can refresh. go_router's pushReplacement alone never resolves it.

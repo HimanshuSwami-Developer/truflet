@@ -169,7 +169,3 @@ class Booking(TimeStamped):
         for b in qs.filter(status="confirmed", date__lte=today).only("id", "date", "start_hour", "duration"):
             if b.date < today or b.start_hour + b.duration <= hour:
                 cls.objects.filter(pk=b.pk).update(status="completed")
-
-
-def make_txn_id(method):
-    return f"{method.upper()}/{secrets.randbelow(10000):04d}/{secrets.randbelow(10000):04d}/{secrets.randbelow(10000):04d}"

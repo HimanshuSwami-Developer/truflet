@@ -169,7 +169,10 @@ class _MatchTile extends StatelessWidget {
                   if (roleLabel.isNotEmpty) ...[Pill(roleLabel, bg: bg, fg: fg), const SizedBox(width: 6)],
                   SlotStatePill(g),
                   const Spacer(),
-                  Text('${g['paid_count']}/${g['capacity']} paid', style: t(12, w: FontWeight.w700)),
+                  Text(
+                    g['own_squad'] == true ? 'Squad of ${g['capacity']}' : '${g['paid_count']}/${g['capacity']} paid',
+                    style: t(12, w: FontWeight.w700),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),

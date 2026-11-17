@@ -30,11 +30,13 @@ python manage.py runserver 0.0.0.0:8000
 
 **Postgres.** Set `DATABASE_URL=postgres://user:pass@host:5432/turflet`. If it is unset, the backend uses SQLite so you can try things quickly.
 
+**Service layer (payments & notifications).** Payments and notifications are separate apps that the rest of the backend reaches only through `payments/service.py` and `notifications/service.py`, passing plain values (user ids, amounts, strings) rather than model objects. The payments service is the only code that changes a wallet balance. Each service has a `Protocol` interface plus a local implementation, selected by `PAYMENT_SERVICE` / `NOTIFICATION_SERVICE` in settings. To split one out as a microservice, give it its own deployment and write a client class with the same methods (HTTP or queue), then point the setting at that class. Nothing that calls the service needs to change.
+
 **Things to plug in before going live**
 | What | Where | Dev behaviour |
 |---|---|---|
 | SMTP for sign-in codes (Gmail app password, SES, SendGrid, Mailgun…) | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` in `.env`, then `OTP_DEV_MODE=False` | Without `EMAIL_HOST`, emails print in the server console; in dev mode the code is always `123456` and the API returns it |
-| Payment gateway (Razorpay…) | `bookings/payments.py`, `PAYMENT_PROVIDER` | `mock` confirms payments instantly |
+| Payment gateway (Razorpay…) | `payments/gateways.py`, `PAYMENT_PROVIDER` | `mock` confirms payments instantly |
 
 ## 2. Mobile app
 
@@ -79,7 +81,7 @@ Built from `Turf-Platform-Product-Flow-and-Solutions.docx`. Tabs: Explore · **M
 - Crowdfunding alerts for the host: the slot was booked by another group, or the lobby isn't full 60 minutes before kickoff. The host can pay the balance, switch slot, or unpublish (paid solo players are refunded and the squad chat stays). If the pool isn't full by kickoff, everyone is refunded.
 - Refunds: a venue or rain cancellation refunds everyone 100%. A player who leaves 30 minutes or more before kickoff is refunded once a replacement pays, or right away if the turf isn't booked yet. Leaving later than that is non-refundable.
 - `split_fee` (App settings, default ₹15) is the platform fee on each split payment.
-- The payment provider is still `mock`. Going live means a gateway with split settlements (Razorpay Route or Cashfree Easy Split) behind `charge_amount` and `refund_amount` in `bookings/payments.py`.
+- The payment provider is still `mock`. Going live means a gateway with split settlements (Razorpay Route or Cashfree Easy Split) behind `charge` and `refund` in `payments/gateways.py`.
 
 ```bash
 cd backend && DATABASE_URL=sqlite:///test.sqlite3 python manage.py test community   # match flows end to end

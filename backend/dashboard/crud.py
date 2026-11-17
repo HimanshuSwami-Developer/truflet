@@ -15,7 +15,8 @@ from django.db import models
 from accounts.models import User
 from bookings.models import Booking, Coupon
 from community.models import JoinRequest, Lobby, LobbyMember
-from core.models import FAQ, Notification, PolicySection, RefundRule, SupportTicket
+from core.models import FAQ, PolicySection, RefundRule, SupportTicket
+from notifications.models import Notification  # admin panel reads the service's own tables directly
 from venues.models import Amenity, Area, BlockedSlot, City, Court, Review, Sport, Venue, VenuePhoto, VenueSport
 
 INPUT = ("w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 "

@@ -7,11 +7,12 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from core.models import AppConfig, RefundRule, notify
+from core.models import AppConfig, RefundRule
+from notifications import service as notifications
 from venues.models import BlockedSlot, Court, VenueSport
 
 from .models import Booking, Coupon, make_booking_code
-from .payments import get_provider
+from payments import service as payments
 
 
 def fmt_hour(h):
@@ -160,16 +161,13 @@ def pay(booking, method, upi_id=""):
         raise ValidationError({"booking": "Your slot hold expired. Please pick the slot again."})
     if method not in dict(Booking.METHODS) or method == "pool":
         raise ValidationError({"method": "Unknown payment method."})
-    if method == "wallet" and booking.user.wallet_balance < booking.total:
+    if method == "wallet" and payments.wallet_balance(booking.user_id) < booking.total:
         raise ValidationError({"method": "Not enough Turflet balance."})
-    result = get_provider().charge(booking, method, upi_id)
+    result = payments.charge(booking.user_id, booking.total, method, reference=booking.code, upi_id=upi_id)
     if not result.success:
         booking.payment_status = "failed"
         booking.save(update_fields=["payment_status"])
         raise ValidationError({"payment": result.message or "Payment failed. Please try again."})
-    if method == "wallet":
-        booking.user.wallet_balance -= booking.total
-        booking.user.save(update_fields=["wallet_balance"])
     booking.status = "confirmed"
     booking.payment_status = "paid"
     booking.payment_method = method
@@ -177,7 +175,7 @@ def pay(booking, method, upi_id=""):
     booking.transaction_id = result.transaction_id
     booking.paid_at = timezone.now()
     booking.save()
-    notify(booking.user, "Booking confirmed",
+    notifications.notify(booking.user_id, "Booking confirmed",
            f"{booking.venue.name} · {booking.date:%a, %-d %b} · {fmt_hour(booking.start_hour)}", "booking")
     from community.services import on_booking_paid
     on_booking_paid(booking)
@@ -218,11 +216,11 @@ def cancel(booking, reason="", by_venue=False):
     booking.refund_amount = refund
     if refund > 0:
         if not pool:
-            get_provider().refund(booking, refund)
+            payments.refund(booking.user_id, refund, booking.payment_method, booking.transaction_id)
         booking.payment_status = "refunded"
         booking.refunded_at = timezone.now()
     booking.save()
-    notify(booking.user, "Booking cancelled",
+    notifications.notify(booking.user_id, "Booking cancelled",
            f"{booking.code} · refund ₹{refund}" if refund else f"{booking.code} cancelled", "booking")
     from community.services import on_booking_cancelled
     on_booking_cancelled(booking, by_venue)

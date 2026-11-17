@@ -37,11 +37,19 @@ class _SquadBuilderView extends StatelessWidget {
     try {
       final lobby = await cubit.create();
       if (!context.mounted) return;
+      if (cubit.state.ownSquad) {
+        // Private booking with the host's own players: hold the slot and go straight to payment.
+        final booking = await cubit.lockTurf(lobby['id']);
+        if (context.mounted) await context.replaceWithPayment(booking);
+        return;
+      }
       // Creating a match never charges anything: the host locks the turf (or pays a pool share)
       // from the Match Room when ready, and friends get an invite to accept.
       toast(
         context,
-        lobby['status'] == 'draft' ? 'Match created. Lock the turf when you\'re ready.' : 'Match created. Pay your share to start the pool.',
+        lobby['status'] == 'draft'
+            ? 'Match created. Lock the turf when you\'re ready.'
+            : 'Match created. Pay your share to start the pool.',
       );
       await context.replaceWithMatch(lobby['id']);
     } catch (e) {
@@ -50,9 +58,7 @@ class _SquadBuilderView extends StatelessWidget {
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocBuilder<SquadBuilderCubit, SquadBuilderState>(
+  Widget build(BuildContext context) => BlocBuilder<SquadBuilderCubit, SquadBuilderState>(
     builder: (context, st) {
       final cubit = context.read<SquadBuilderCubit>();
       final top = MediaQuery.of(context).padding.top;
@@ -88,73 +94,81 @@ class _SquadBuilderView extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 children: [
                   _slotCard(st),
-                  const Label(
-                    'Team capacity',
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
-                  ),
+                  const Label('Team capacity', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
                   _capacity(st, cubit),
-                  const Label(
-                    'Your squad',
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
-                  ),
+                  const Label('Your squad', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
                   _squad(context, st, cubit),
-                  const Label(
-                    'Payment rule · set once',
-                    padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _option(
-                          st.rule == 'split',
-                          'Split equally',
-                          st.split
-                              ? '${inr(st.perHead)} each'
-                              : 'Everyone pays a share',
-                          LucideIcons.arrowLeftRight,
-                          () => cubit.setRule('split'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _option(
-                          st.rule == 'host',
-                          'I\'ll pay full',
-                          'Everyone else plays free',
-                          LucideIcons.handCoins,
-                          () => cubit.setRule('host'),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
                   _publicToggle(st, cubit),
-                  if (st.split) ...[
-                    const Label(
-                      'How to book the turf',
-                      padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
-                    ),
-                    _modeCard(
-                      st,
-                      'book_recover',
-                      'Book & recover',
-                      'Pay ${inr(a.turfPrice)} now to lock the turf. Shares come back to you through escrow as '
-                          'players pay — released when your group checks in.',
-                      LucideIcons.lock,
-                      st.isPrime ? 'Recommended for prime slots' : null,
-                      cubit,
-                    ),
+                  if (st.ownSquad) ...[
                     const SizedBox(height: 10),
-                    _modeCard(
-                      st,
-                      'crowdfund',
-                      'Crowdfund first',
-                      'Pay only your share. The turf is booked once the pool covers it — if another group books '
-                          'first or it isn\'t full near kickoff, you choose what to do and paid players are refunded.',
-                      LucideIcons.piggyBank,
-                      st.isPrime ? 'Risky at peak hours' : 'Zero upfront risk',
-                      cubit,
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: C.limeSoft, borderRadius: BorderRadius.circular(16)),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(LucideIcons.lock, size: 18, color: C.green700),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Your own squad: you pay the full turf now and the slot is booked right away. '
+                              'Add friends who are on Turflet to split the cost, or open spots to solo players.',
+                              style: t(13, c: C.mutedInk, h: 1.45),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ] else ...[
+                    const Label('Payment rule · set once', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _option(
+                            st.rule == 'split',
+                            'Split equally',
+                            st.split ? '${inr(st.perHead)} each' : 'Everyone pays a share',
+                            LucideIcons.arrowLeftRight,
+                            () => cubit.setRule('split'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _option(
+                            st.rule == 'host',
+                            'I\'ll pay full',
+                            'Everyone else plays free',
+                            LucideIcons.handCoins,
+                            () => cubit.setRule('host'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (st.split) ...[
+                      const Label('How to book the turf', padding: EdgeInsets.fromLTRB(0, 20, 0, 10)),
+                      _modeCard(
+                        st,
+                        'book_recover',
+                        'Book & recover',
+                        'Pay ${inr(a.turfPrice)} now to lock the turf. Shares come back to you through escrow as '
+                            'players pay — released when your group checks in.',
+                        LucideIcons.lock,
+                        st.isPrime ? 'Recommended for prime slots' : null,
+                        cubit,
+                      ),
+                      const SizedBox(height: 10),
+                      _modeCard(
+                        st,
+                        'crowdfund',
+                        'Crowdfund first',
+                        'Pay only your share. The turf is booked once the pool covers it — if another group books '
+                            'first or it isn\'t full near kickoff, you choose what to do and paid players are refunded.',
+                        LucideIcons.piggyBank,
+                        st.isPrime ? 'Risky at peak hours' : 'Zero upfront risk',
+                        cubit,
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 20),
                   _summary(st),
@@ -162,28 +176,21 @@ class _SquadBuilderView extends StatelessWidget {
               ),
             ),
             Container(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                14,
-                20,
-                14 + MediaQuery.of(context).padding.bottom,
-              ),
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 14 + MediaQuery.of(context).padding.bottom),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(top: BorderSide(color: C.line)),
               ),
               child: PrimaryButton(
-                st.crowdfund
+                st.ownSquad
+                    ? 'Book & pay ${inr(a.turfPrice)}'
+                    : st.crowdfund
                     ? 'Create lobby · pay ${inr(st.hostPaysNow)}'
                     : st.isPublic && st.openSpots > 0
                     ? 'Lock turf & publish lobby'
                     : 'Lock turf · ${inr(a.turfPrice)}',
                 loading: st.busy,
-                trailing: const Icon(
-                  LucideIcons.arrowRight,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                trailing: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 18),
                 onTap: () => _create(context),
               ),
             ),
@@ -199,21 +206,13 @@ class _SquadBuilderView extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Img(
-            a.venue['image'],
-            width: 52,
-            height: 52,
-            radius: BorderRadius.circular(14),
-          ),
+          Img(a.venue['image'], width: 52, height: 52, radius: BorderRadius.circular(14)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${a.sport['name']} · ${a.court['name']}',
-                  style: t(15, w: FontWeight.w700),
-                ),
+                Text('${a.sport['name']} · ${a.court['name']}', style: t(15, w: FontWeight.w700)),
                 Text(
                   '${st.dateLabel} · ${fmtTime(a.startHour)} – ${fmtTime(a.startHour + a.duration)}',
                   style: t(13, c: C.muted),
@@ -234,12 +233,7 @@ class _SquadBuilderView extends StatelessWidget {
   }
 
   Widget _capacity(SquadBuilderState st, SquadBuilderCubit cubit) {
-    Widget btn(
-      String label,
-      bool primary,
-      VoidCallback onTap,
-      String semantics,
-    ) => Semantics(
+    Widget btn(String label, bool primary, VoidCallback onTap, String semantics) => Semantics(
       button: true,
       label: semantics,
       child: GestureDetector(
@@ -279,40 +273,20 @@ class _SquadBuilderView extends StatelessWidget {
               ],
             ),
           ),
-          btn(
-            '−',
-            false,
-            () => cubit.setCapacity(st.capacity - 1),
-            'Fewer players',
-          ),
+          btn('−', false, () => cubit.setCapacity(st.capacity - 1), 'Fewer players'),
           SizedBox(
             width: 48,
-            child: Text(
-              '${st.capacity}',
-              textAlign: TextAlign.center,
-              style: d(22),
-            ),
+            child: Text('${st.capacity}', textAlign: TextAlign.center, style: d(22)),
           ),
-          btn(
-            '+',
-            true,
-            () => cubit.setCapacity(st.capacity + 1),
-            'More players',
-          ),
+          btn('+', true, () => cubit.setCapacity(st.capacity + 1), 'More players'),
         ],
       ),
     );
   }
 
-  Widget _squad(
-    BuildContext context,
-    SquadBuilderState st,
-    SquadBuilderCubit cubit,
-  ) {
+  Widget _squad(BuildContext context, SquadBuilderState st, SquadBuilderCubit cubit) {
     final me = context.read<AppCubit>().state.user ?? const {};
-    final recent = st.recent
-        .where((p) => !st.friends.any((f) => f['user_id'] == p['id']))
-        .toList();
+    final recent = st.recent.where((p) => !st.friends.any((f) => f['user_id'] == p['id'])).toList();
     return CardBox(
       padding: const EdgeInsets.all(14),
       shadow: null,
@@ -320,14 +294,7 @@ class _SquadBuilderView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _personRow(
-            me['initials'] ?? 'ME',
-            'You',
-            'Host',
-            C.mint,
-            C.green700,
-            null,
-          ),
+          _personRow(me['initials'] ?? 'ME', 'You', 'Host', C.mint, C.green700, null),
           for (final (i, f) in st.friends.indexed)
             _personRow(
               f['initials'] ?? '',
@@ -342,10 +309,7 @@ class _SquadBuilderView extends StatelessWidget {
             Container(
               margin: const EdgeInsets.only(top: 6),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: C.ground,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: C.ground, borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
                   const Icon(LucideIcons.userPlus, size: 16, color: C.muted),
@@ -354,7 +318,7 @@ class _SquadBuilderView extends StatelessWidget {
                     child: Text(
                       st.isPublic
                           ? '${st.openSpots} open spot${st.openSpots == 1 ? '' : 's'} for solo players'
-                          : '${st.openSpots} more of your guests (you cover them)',
+                          : '${st.openSpots} more of your own players',
                       style: t(13, c: C.mutedInk),
                     ),
                   ),
@@ -411,22 +375,11 @@ class _SquadBuilderView extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Avatar(
-                            p['initials'] ?? '',
-                            size: 22,
-                            index: (p['id'] ?? 0) as int,
-                          ),
+                          Avatar(p['initials'] ?? '', size: 22, index: (p['id'] ?? 0) as int),
                           const SizedBox(width: 6),
-                          Text(
-                            (p['name'] ?? '').toString().split(' ').first,
-                            style: t(12, w: FontWeight.w600),
-                          ),
+                          Text((p['name'] ?? '').toString().split(' ').first, style: t(12, w: FontWeight.w600)),
                           const SizedBox(width: 4),
-                          const Icon(
-                            LucideIcons.plus,
-                            size: 12,
-                            color: C.brand,
-                          ),
+                          const Icon(LucideIcons.plus, size: 12, color: C.brand),
                         ],
                       ),
                     ),
@@ -517,12 +470,7 @@ class _SquadBuilderView extends StatelessWidget {
                     child: Text(error!, style: t(13, c: C.redInk)),
                   ),
                 const SizedBox(height: 12),
-                PrimaryButton(
-                  'Find player',
-                  height: 52,
-                  loading: busy,
-                  onTap: find,
-                ),
+                PrimaryButton('Find player', height: 52, loading: busy, onTap: find),
               ],
             );
           },
@@ -543,10 +491,7 @@ class _SquadBuilderView extends StatelessWidget {
           children: [
             Text('Add a guest', style: d(22)),
             const SizedBox(height: 6),
-            Text(
-              'Guests aren\'t on Turflet. You cover their share.',
-              style: t(13, c: C.muted, h: 1.4),
-            ),
+            Text('Guests aren\'t on Turflet. You cover their share.', style: t(13, c: C.muted, h: 1.4)),
             const SizedBox(height: 14),
             _field(
               name,
@@ -556,11 +501,7 @@ class _SquadBuilderView extends StatelessWidget {
               onSubmit: () => Navigator.pop(ctx, name.text),
             ),
             const SizedBox(height: 12),
-            PrimaryButton(
-              'Add guest',
-              height: 52,
-              onTap: () => Navigator.pop(ctx, name.text),
-            ),
+            PrimaryButton('Add guest', height: 52, onTap: () => Navigator.pop(ctx, name.text)),
           ],
         ),
       ),
@@ -588,9 +529,7 @@ class _SquadBuilderView extends StatelessWidget {
       controller: c,
       autofocus: autofocus,
       keyboardType: type,
-      textCapitalization: type == TextInputType.name
-          ? TextCapitalization.words
-          : TextCapitalization.none,
+      textCapitalization: type == TextInputType.name ? TextCapitalization.words : TextCapitalization.none,
       style: t(15),
       onSubmitted: (_) => onSubmit?.call(),
       decoration: InputDecoration(
@@ -601,13 +540,7 @@ class _SquadBuilderView extends StatelessWidget {
     ),
   );
 
-  Widget _option(
-    bool on,
-    String title,
-    String sub,
-    IconData icon,
-    VoidCallback onTap,
-  ) => Choice(
+  Widget _option(bool on, String title, String sub, IconData icon, VoidCallback onTap) => Choice(
     selected: on,
     filled: false,
     selBg: C.mint,
@@ -656,10 +589,7 @@ class _SquadBuilderView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Open to solo players',
-                      style: t(14, w: FontWeight.w700),
-                    ),
+                    Text('Open to solo players', style: t(14, w: FontWeight.w700)),
                     const SizedBox(height: 2),
                     Text(
                       !can
@@ -748,45 +678,32 @@ class _SquadBuilderView extends StatelessWidget {
       border: Border.all(color: C.line),
       child: Column(
         children: [
-          PriceRow(
-            'Turf · ${a.duration} hr${a.duration == 1 ? '' : 's'}',
-            inr(a.turfPrice),
-          ),
+          PriceRow('Turf · ${a.duration} hr${a.duration == 1 ? '' : 's'}', inr(a.turfPrice)),
           const SizedBox(height: 8),
           PriceRow(
             'Players',
-            '${st.capacity} (${st.squad} in squad${st.isPublic && st.openSpots > 0 ? ', ${st.openSpots} open' : ''})',
+            st.ownSquad
+                ? '${st.capacity} · your squad'
+                : '${st.capacity} (${st.squad} in squad${st.isPublic && st.openSpots > 0 ? ', ${st.openSpots} open' : ''})',
           ),
           if (st.split) ...[
             const SizedBox(height: 8),
-            PriceRow(
-              'Each player pays',
-              '${inr(st.share)} + ${inr(st.splitFee)} fee',
-            ),
+            PriceRow('Each player pays', '${inr(st.share)} + ${inr(st.splitFee)} fee'),
             if (st.guests > 0) ...[
               const SizedBox(height: 8),
-              PriceRow(
-                'You cover ${st.guests} guest${st.guests == 1 ? '' : 's'}',
-                inr(st.share * st.guests),
-              ),
+              PriceRow('You cover ${st.guests} guest${st.guests == 1 ? '' : 's'}', inr(st.share * st.guests)),
             ],
           ],
           const SizedBox(height: 12),
           PriceRow(
-            st.crowdfund
-                ? 'You pay now (into escrow)'
-                : 'You pay now (+ booking fee)',
+            st.crowdfund ? 'You pay now (into escrow)' : 'You pay now (+ booking fee)',
             inr(st.hostPaysNow),
             bold: true,
             top: true,
           ),
           if (st.split && !st.crowdfund && others > 0) ...[
             const SizedBox(height: 6),
-            PriceRow(
-              'You recover up to',
-              inr(st.share * others),
-              color: C.green700,
-            ),
+            PriceRow('You recover up to', inr(st.share * others), color: C.green700),
           ],
         ],
       ),

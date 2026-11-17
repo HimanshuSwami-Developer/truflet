@@ -302,6 +302,14 @@ class SquadBuilderValidationTests(MatchTestCase):
         self.assertEqual(host.share_due, 167 * 5)  # own share + 4 guests
         self.assertEqual(r.data["spots_left"], 0)
 
+    def test_private_host_paid_squad_has_no_placeholder_guests_and_is_full(self):
+        lb = self.create(payment_rule="host", booking_mode="book_recover", is_public=False, capacity=10, friends=[])
+        self.assertEqual(LobbyMember.objects.filter(lobby_id=lb["id"]).count(), 1)  # just the host
+        self.assertTrue(lb["own_squad"])
+        self.assertEqual((lb["taken"], lb["spots_left"]), (10, 0))
+        lb = self.lock(lb)
+        self.assertEqual(lb["checkout_booking"]["status"], "held")
+
     def test_capacity_cannot_exceed_sport_max(self):
         r = self.api(self.host).post("/api/v1/lobbies/", {
             "venue": self.venue.id, "court": self.court.id, "sport": self.sport.id, "date": self.day.isoformat(),

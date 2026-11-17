@@ -16,7 +16,9 @@ from accounts.mailer import send_login_code
 from accounts.models import EmailOTP, User, normalize_email
 from bookings import services as booking_services
 from bookings.models import Booking
-from core.models import AppConfig, Notification, SupportTicket, notify
+from core.models import AppConfig, SupportTicket
+from notifications import service as notifications
+from payments import service as payments
 from venues.models import Court, Sport, Venue, VenuePhoto, VenueSport
 
 from .crud import REGISTRY, TailwindFormMixin, sections
@@ -447,11 +449,10 @@ def user_wallet(request, pk):
         delta = int(request.POST.get("amount", 0))
     except ValueError:
         delta = 0
-    u.wallet_balance = max(0, u.wallet_balance + delta)
-    u.save(update_fields=["wallet_balance"])
+    balance = payments.adjust_wallet(u.pk, delta)
     if delta:
-        notify(u, "Wallet updated", f"₹{abs(delta)} {'added to' if delta > 0 else 'removed from'} your Turflet balance")
-    return JsonResponse({"ok": True, "balance": u.wallet_balance})
+        notifications.notify(u.pk, "Wallet updated", f"₹{abs(delta)} {'added to' if delta > 0 else 'removed from'} your Turflet balance")
+    return JsonResponse({"ok": True, "balance": balance})
 
 
 # ------------------------------------------------------------------ settings & broadcast
@@ -485,8 +486,8 @@ def broadcast(request):
             users = User.objects.filter(is_active=True, notifications_on=True)
             if audience == "bookers":
                 users = users.filter(bookings__payment_status="paid").distinct()
-            Notification.objects.bulk_create([Notification(user=u, title=title, body=body, kind="offer") for u in users])
-            messages.success(request, f"Sent to {users.count()} players.")
+            sent = notifications.broadcast(users.values_list("pk", flat=True), title, body, kind="offer")
+            messages.success(request, f"Sent to {sent} players.")
             return redirect("dashboard:broadcast")
     return render(request, "dashboard/broadcast.html", ctx(request))
 

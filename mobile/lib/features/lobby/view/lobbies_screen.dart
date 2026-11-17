@@ -21,11 +21,9 @@ class LobbiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (c) => LobbiesCubit(
-      args: args,
-      repository: c.read<LobbyRepository>(),
-      areaId: c.read<AppCubit>().state.areaId,
-    )..load(),
+    create: (c) =>
+        LobbiesCubit(args: args, repository: c.read<LobbyRepository>(), areaId: c.read<AppCubit>().state.areaId)
+          ..load(),
     child: _LobbiesView(args: args),
   );
 }
@@ -84,7 +82,10 @@ class _LobbiesView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(args.isCity ? 'Open lobbies in ${args.cityName.isEmpty ? city : args.cityName}' : 'Join solo', style: d(20)),
+                      Text(
+                        args.isCity ? 'Open lobbies in ${args.cityName.isEmpty ? city : args.cityName}' : 'Join solo',
+                        style: d(20),
+                      ),
                       Text(
                         args.subtitle.isNotEmpty
                             ? args.subtitle
@@ -209,7 +210,11 @@ class _InviteSheetState extends State<_InviteSheet> {
         ),
         if (error != null) _SheetError(error!),
         const SizedBox(height: 14),
-        PrimaryButton('Accept & join', loading: busy == 'accept-invite', onTap: busy == null ? () => _answer('accept-invite') : null),
+        PrimaryButton(
+          'Accept & join',
+          loading: busy == 'accept-invite',
+          onTap: busy == null ? () => _answer('accept-invite') : null,
+        ),
         const SizedBox(height: 8),
         GhostButton('Decline', onTap: busy == null ? () => _answer('decline-invite') : null),
       ],
@@ -274,7 +279,10 @@ class _RequestSheetState extends State<_RequestSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _step(LucideIcons.messageCircle, 'A private chat opens with ${g['host']['name']}. The squad chat stays hidden.'),
+              _step(
+                LucideIcons.messageCircle,
+                'A private chat opens with ${g['host']['name']}. The squad chat stays hidden.',
+              ),
               _step(LucideIcons.userCheck, 'The host approves or declines after checking your attendance score.'),
               _step(
                 split ? LucideIcons.timer : LucideIcons.circleCheck,
@@ -327,7 +335,6 @@ class _RequestSheetState extends State<_RequestSheet> {
   );
 }
 
-
 /// Inline error for a bottom sheet.
 class _SheetError extends StatelessWidget {
   final String message;
@@ -343,7 +350,9 @@ class _SheetError extends StatelessWidget {
       children: [
         const Icon(LucideIcons.circleAlert, size: 16, color: C.redInk),
         const SizedBox(width: 8),
-        Expanded(child: Text(message, style: t(13, c: C.redInk, h: 1.4))),
+        Expanded(
+          child: Text(message, style: t(13, c: C.redInk, h: 1.4)),
+        ),
       ],
     ),
   );

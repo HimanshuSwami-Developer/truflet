@@ -35,9 +35,16 @@ class SquadBuilderState {
   int get openSpots => (capacity - squad).clamp(0, 99);
   int get namedGuests => friends.where((f) => f['tag'] == 'guest').length;
 
+  /// Nobody else can join: the host turned off "Open to solo players", or the squad is already full.
+  bool get isPrivate => !isPublic || openSpots == 0;
+
+  /// The host brings their own players and added nobody on Turflet to share the cost with: a plain
+  /// private booking. The host pays the full turf in one go — no payment rule, no lobby to publish.
+  bool get ownSquad => isPrivate && !friends.any((f) => f['tag'] == 'known');
+
   /// Private lobby: spots nobody was named for become the host's guests.
   int get guests => namedGuests + (isPublic ? 0 : openSpots);
-  bool get split => rule == 'split';
+  bool get split => !ownSquad && rule == 'split';
   bool get crowdfund => split && mode == 'crowdfund';
   int get share => (args.turfPrice / capacity).ceil();
 
@@ -128,6 +135,9 @@ class SquadBuilderCubit extends Cubit<SquadBuilderState> {
   /// Finds a Turflet player by email / mobile / referral code. Throws ApiError.
   Future<Json> lookup(String contact) async => asMap((await _repo.lookup(contact.trim()))['player']);
 
+  /// Own squad: hold the slot right away and return the booking to pay for. Throws ApiError.
+  Future<Json> lockTurf(int lobbyId) async => asMap((await _repo.action(lobbyId, 'lock'))['checkout_booking']);
+
   /// Creates the lobby. Returns it (with `checkout_booking` when the host pays the turf now). Throws ApiError.
   Future<Json> create() async {
     _emit(state.copyWith(busy: true));
@@ -141,8 +151,8 @@ class SquadBuilderCubit extends Cubit<SquadBuilderState> {
         'start_hour': a.startHour,
         'duration': a.duration,
         'capacity': state.capacity,
-        'payment_rule': state.rule,
-        'booking_mode': state.mode,
+        'payment_rule': state.ownSquad ? 'host' : state.rule,
+        'booking_mode': state.ownSquad ? 'book_recover' : state.mode,
         'is_public': state.isPublic && state.openSpots > 0,
         'friends': [
           for (final f in state.friends)

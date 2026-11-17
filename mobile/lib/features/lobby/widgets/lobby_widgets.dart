@@ -32,7 +32,10 @@ class SlotStatePill extends StatelessWidget {
         children: [
           Icon(icon, size: size + 1, color: fg),
           const SizedBox(width: 4),
-          Text(label, style: t(size, w: FontWeight.w700, c: fg)),
+          Text(
+            label,
+            style: t(size, w: FontWeight.w700, c: fg),
+          ),
         ],
       ),
     );
@@ -129,13 +132,22 @@ String reliability(Json host) {
 Widget perHead(Json lobby, {double size = 18}) {
   final amount = (lobby['per_head'] as int?) ?? 0;
   if (amount == 0) {
-    return Text('Free · host pays', style: t(13, w: FontWeight.w700, c: C.brand));
+    return Text(
+      'Free · host pays',
+      style: t(13, w: FontWeight.w700, c: C.brand),
+    );
   }
   return Text.rich(
     TextSpan(
       children: [
-        TextSpan(text: inr(amount), style: d(size, c: C.brand)),
-        TextSpan(text: ' /player', style: t(12, c: C.muted)),
+        TextSpan(
+          text: inr(amount),
+          style: d(size, c: C.brand),
+        ),
+        TextSpan(
+          text: ' /player',
+          style: t(12, c: C.muted),
+        ),
       ],
     ),
   );
@@ -162,7 +174,11 @@ class LobbyCard extends StatelessWidget {
       'member' => ('Open room', C.mint, C.green700),
       'requested' => ('Requested', C.amberSoft, C.amber),
       'invited' => ('Accept invite', C.coral, Colors.white),
-      'declined' => (left == 0 ? 'Full' : 'Request again', left == 0 ? C.chip : C.brand, left == 0 ? C.muted : Colors.white),
+      'declined' => (
+        left == 0 ? 'Full' : 'Request again',
+        left == 0 ? C.chip : C.brand,
+        left == 0 ? C.muted : Colors.white,
+      ),
       _ => (left == 0 ? 'Full' : 'Request to join', left == 0 ? C.chip : C.brand, left == 0 ? C.muted : Colors.white),
     };
     return Material(
@@ -173,7 +189,11 @@ class LobbyCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), boxShadow: shadowCard, color: Colors.white),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: shadowCard,
+            color: Colors.white,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -277,7 +297,11 @@ class EmptyNote extends StatelessWidget {
         const SizedBox(height: 12),
         Text(title, style: d(18), textAlign: TextAlign.center),
         const SizedBox(height: 6),
-        Text(body, textAlign: TextAlign.center, style: t(14, c: C.muted, h: 1.5)),
+        Text(
+          body,
+          textAlign: TextAlign.center,
+          style: t(14, c: C.muted, h: 1.5),
+        ),
         if (action != null) ...[const SizedBox(height: 16), action!],
       ],
     ),

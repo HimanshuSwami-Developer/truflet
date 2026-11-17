@@ -127,7 +127,9 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
         if (mounted) toast(context, 'Turn on location to check in — or show your booking QR at the counter.');
         return;
       }
-      final pos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
       await _run('checkin', {'lat': pos.latitude, 'lng': pos.longitude});
     } catch (e) {
       if (mounted) toast(context, e.toString());
@@ -169,7 +171,13 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
             ),
           ),
           const SizedBox(height: 14),
-          PrimaryButton('Report no-show', height: 52, color: C.red, shadow: false, onTap: () => Navigator.pop(ctx, true)),
+          PrimaryButton(
+            'Report no-show',
+            height: 52,
+            color: C.red,
+            shadow: false,
+            onTap: () => Navigator.pop(ctx, true),
+          ),
         ],
       ),
     );
@@ -238,15 +246,19 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: C.line),
           ),
-          child: QrImageView(data: booking['qr_payload'] ?? '', size: 200, eyeStyle: const QrEyeStyle(color: C.ink)),
+          child: QrImageView(
+            data: booking['qr_payload'] ?? '',
+            size: 200,
+            eyeStyle: const QrEyeStyle(color: C.ink),
+          ),
         ),
         const SizedBox(height: 16),
-        Text('CHECK-IN PIN', style: t(11, w: FontWeight.w600, c: C.muted, ls: 1.2)),
-        const SizedBox(height: 4),
         Text(
-          (booking['pin'] ?? '----').toString().split('').join(' '),
-          style: d(36, ls: 4, c: C.brand),
+          'CHECK-IN PIN',
+          style: t(11, w: FontWeight.w600, c: C.muted, ls: 1.2),
         ),
+        const SizedBox(height: 4),
+        Text((booking['pin'] ?? '----').toString().split('').join(' '), style: d(36, ls: 4, c: C.brand)),
         const SizedBox(height: 6),
         Text(booking['code'] ?? '', style: t(13, c: C.muted)),
         const SizedBox(height: 12),
@@ -270,7 +282,10 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
     Widget item(IconData icon, String label, VoidCallback onTap, {Color color = C.ink}) => ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: color, size: 20),
-      title: Text(label, style: t(15, w: FontWeight.w600, c: color)),
+      title: Text(
+        label,
+        style: t(15, w: FontWeight.w600, c: color),
+      ),
       onTap: () {
         Navigator.pop(context);
         onTap();
@@ -287,7 +302,8 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
               await context.pushTicket(booking['id']); // a cancel there ends the match
               _cubit.reload();
             }),
-          if (host['can_switch'] == true) item(LucideIcons.calendarClock, 'Switch to another slot', () => _switchSlot(lobby)),
+          if (host['can_switch'] == true)
+            item(LucideIcons.calendarClock, 'Switch to another slot', () => _switchSlot(lobby)),
           if (host['can_unpublish'] == true) item(LucideIcons.eyeOff, 'Unpublish lobby', _unpublish),
           if (host['can_cancel'] == true) item(LucideIcons.x, 'Cancel match', _cancelMatch, color: C.redInk),
           if (me['can_leave'] == true) item(LucideIcons.logOut, 'Leave match', () => _leave(lobby), color: C.orangeInk),
@@ -445,16 +461,22 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
               if (lobby['is_public'] == true && lobby['status'] != 'completed')
                 Pill('${lobby['spots_left']} open', bg: C.limeSoft, fg: C.green700),
               const Spacer(),
-              const Icon(LucideIcons.circleCheck, size: 15, color: C.green700),
-              const SizedBox(width: 4),
-              Text('Paid $paid/$cap', style: t(13, w: FontWeight.w700)),
+              if (lobby['own_squad'] == true)
+                Text('Private · squad of $cap', style: t(13, w: FontWeight.w700))
+              else ...[
+                const Icon(LucideIcons.circleCheck, size: 15, color: C.green700),
+                const SizedBox(width: 4),
+                Text('Paid $paid/$cap', style: t(13, w: FontWeight.w700)),
+              ],
             ],
           ),
           if (crowdfunding) ...[
             const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(child: Text('Pool for the turf', style: t(12, c: C.muted))),
+                Expanded(
+                  child: Text('Pool for the turf', style: t(12, c: C.muted)),
+                ),
                 Text('${inr(pool['pooled'])} of ${inr(pool['target'])}', style: t(12, w: FontWeight.w700)),
               ],
             ),
@@ -467,7 +489,9 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
               children: [
                 const Icon(LucideIcons.shieldCheck, size: 14, color: C.green700),
                 const SizedBox(width: 6),
-                Expanded(child: Text(payoutText, style: t(12, c: C.mutedInk))),
+                Expanded(
+                  child: Text(payoutText, style: t(12, c: C.mutedInk)),
+                ),
               ],
             ),
           ],
@@ -552,7 +576,10 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: t(14, w: FontWeight.w700, c: fg)),
+                    Text(
+                      title,
+                      style: t(14, w: FontWeight.w700, c: fg),
+                    ),
                     const SizedBox(height: 2),
                     Text(body, style: t(12, c: fg, h: 1.4)),
                   ],
@@ -562,7 +589,11 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
           ),
           if (actions.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Row(children: [for (final (i, a) in actions.indexed) ...[if (i > 0) const SizedBox(width: 8), Expanded(child: a)]]),
+            Row(
+              children: [
+                for (final (i, a) in actions.indexed) ...[if (i > 0) const SizedBox(width: 8), Expanded(child: a)],
+              ],
+            ),
           ],
         ],
       ),
@@ -596,7 +627,8 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
           bg: C.amberSoft,
           fg: C.amber,
           title: 'Kickoff soon — the pool is short',
-          body: 'Pay the remaining ${inr(host['pay_balance'])} to lock the turf now, switch slot, or unpublish '
+          body:
+              'Pay the remaining ${inr(host['pay_balance'])} to lock the turf now, switch slot, or unpublish '
               '(solo players are refunded, your squad chat stays).',
           actions: [
             if (host['pay_balance'] != null)
@@ -625,7 +657,8 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
           bg: C.coralSoft,
           fg: C.orangeInk,
           title: 'Turf not booked yet',
-          body: 'Get your squad together first. Pay ${inr(host['lock_amount'])} to lock the slot when you\'re ready — '
+          body:
+              'Get your squad together first. Pay ${inr(host['lock_amount'])} to lock the slot when you\'re ready — '
               'until then another group can still book it.',
           actions: [
             act('Lock turf', _lockTurf, primary: true),
@@ -739,6 +772,23 @@ class _MatchRoomViewState extends State<_MatchRoomView> {
                       }
                     },
                   ),
+              ],
+            ),
+          ),
+        if (lobby['own_squad'] == true && (lobby['capacity'] ?? 0) as int > members.length)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: C.limeSoft, borderRadius: BorderRadius.circular(16)),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.users, size: 18, color: C.green700),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '+${(lobby['capacity'] as int) - members.length} of your own players · private squad',
+                    style: t(13, c: C.mutedInk),
+                  ),
+                ),
               ],
             ),
           ),
@@ -907,7 +957,8 @@ class _SwitchSlotSheetState extends State<_SwitchSlotSheet> {
     final dur = (widget.lobby['duration'] ?? 1) as int;
     for (var h = start; h < start + dur; h++) {
       final s = slots!.where((x) => x['hour'] == h).firstOrNull;
-      final mine = DateFormat('yyyy-MM-dd').format(_date) == widget.lobby['date'] &&
+      final mine =
+          DateFormat('yyyy-MM-dd').format(_date) == widget.lobby['date'] &&
           h >= widget.lobby['start_hour'] &&
           h < widget.lobby['start_hour'] + dur;
       if (s == null || (s['status'] != 'free' && !mine)) return false;
@@ -923,7 +974,10 @@ class _SwitchSlotSheetState extends State<_SwitchSlotSheet> {
       children: [
         Text('Switch slot', style: d(22)),
         const SizedBox(height: 4),
-        Text('${widget.lobby['court']['name']} · ${widget.lobby['duration']} hr · everyone is notified', style: t(13, c: C.muted)),
+        Text(
+          '${widget.lobby['court']['name']} · ${widget.lobby['duration']} hr · everyone is notified',
+          style: t(13, c: C.muted),
+        ),
         const SizedBox(height: 14),
         SizedBox(
           height: 40,

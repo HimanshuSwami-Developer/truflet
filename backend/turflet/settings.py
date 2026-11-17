@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "django_filters",
     # local
     "core",
+    "notifications",
+    "payments",
     "accounts",
     "venues",
     "community",
@@ -154,8 +156,13 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
 EMAIL_TIMEOUT = 15
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Turflet <no-reply@turflet.app>")
-# PAYMENT_PROVIDER: "mock" confirms instantly. Add a real gateway in bookings/payments.py.
+# PAYMENT_PROVIDER: "mock" confirms instantly. Add a real gateway in payments/gateways.py.
 PAYMENT_PROVIDER = os.getenv("PAYMENT_PROVIDER", "mock")
+
+# Service layer: dotted path to the class behind each service's interface. The defaults run in this
+# process; point these at client classes (HTTP / queue) once a service runs as its own microservice.
+PAYMENT_SERVICE = os.getenv("PAYMENT_SERVICE", "payments.service.LocalPaymentService")
+NOTIFICATION_SERVICE = os.getenv("NOTIFICATION_SERVICE", "notifications.service.LocalNotificationService")
 PUBLIC_APP_URL = os.getenv("PUBLIC_APP_URL", "turflet.app")
 
 LOGIN_URL = "dashboard:login"

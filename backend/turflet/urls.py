@@ -10,6 +10,7 @@ from bookings import api as bookings
 from community import api as community
 from core import api as core
 from core import views as core_pages
+from notifications import api as notifications
 from venues import api as venues
 
 api = [
@@ -23,10 +24,10 @@ api = [
     path("config/", core.app_config),
     path("faqs/", core.faqs),
     path("policies/", core.policies),
-    path("notifications/", core.notifications),
-    path("notifications/read/", core.notifications_read),
-    path("devices/", core.devices),
-    path("devices/remove/", core.devices_remove),
+    path("notifications/", notifications.notifications),
+    path("notifications/read/", notifications.notifications_read),
+    path("devices/", notifications.devices),
+    path("devices/remove/", notifications.devices_remove),
     path("support/tickets/", core.tickets),
     # venues
     path("cities/", venues.cities),
